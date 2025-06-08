@@ -1,8 +1,8 @@
 //created by matu10583
 //ニコ生のコメントを取ってくる
-import { inject, injectable } from 'inversify';
 import INicoliveMessageClient from './INicoliveMessageClient';
 import INicoliveCommentFetcher from './INicoliveCommentFetcher';
+import { NicoliveCommentData } from '../../model/service/socketio/ISocketIOManageModel';
 
 interface DataProps {
     site: {
@@ -12,33 +12,73 @@ interface DataProps {
     };
 }
 
-@injectable()
+// @injectable()
 export default class NicoliveCommentFetcher implements INicoliveCommentFetcher{
     private msg_client: INicoliveMessageClient;
+    private connect_refcount: number = 0;
+    private comment_recieve_callback: Set<(data: NicoliveCommentData)=>any> = new Set();
+    private page_url: string;
 
     constructor(
-        @inject('INicoliveMessageClient') _client: INicoliveMessageClient,
+        _client: INicoliveMessageClient,
+        page_url: string
     ) {
         this.msg_client = _client
+        this.page_url = page_url
+    }
+    getConnectionRefCount(): number {
+        return this.connect_refcount;
     }
 
-    private createNicoliveURL(page_id: string): string{
-        return `https://live.nicovideo.jp/watch/lv${page_id}`;
-    }
 
-    public async connect(page_id: string): Promise<boolean> {
-        const wsurl = await this.fetchWSUrl(this.createNicoliveURL(page_id));
-        if (wsurl == '') {
-            console.error('web socket url not found');
-            return false;
+    public async addConnection(): Promise<number> {
+        if(this.connect_refcount>0){
+            this.connect_refcount++;
+            return this.connect_refcount;
         }
 
+        const wsurl = await this.fetchWSUrl(this.page_url);
+        if (wsurl == '') {
+            console.error('web socket url not found');
+            return this.connect_refcount;
+        }
         await this.msg_client.connect(wsurl);
-        return true;
+        //TODO: メッセージサーバーコールバック登録
+        
+        
+        this.connect_refcount++;
+        return this.connect_refcount;
     }
 
-    public disconnect() {
+    public decreaseConnection(): number {
+        this.connect_refcount--;
+        if(this.connect_refcount===0){
+            this.msg_client.disconnect(1000, 'Normal Closure');
+        }
+        //念のため正常化
+        if(this.connect_refcount<0){
+            this.connect_refcount=0;
+        }
+        return this.connect_refcount;
+    }
+
+    public forceDisconnect(){
+        this.connect_refcount=0;
         this.msg_client.disconnect(1000, 'Normal Closure');
+    }
+
+    public onRecieveComment(callback:((msg: NicoliveCommentData)=>any)){
+        //コメント取得時のコールバック
+        this.comment_recieve_callback.add(callback);
+    }
+    public offRecieveComment(callback:((msg: NicoliveCommentData)=>any)){
+        //コメント取得時のコールバック
+        this.comment_recieve_callback.delete(callback);
+    }
+    public runRecieveCallback(msg: NicoliveCommentData){
+        for(const c of this.comment_recieve_callback){
+            c(msg);
+        }
     }
 
     private async fetchWSUrl(url: string): Promise<string> {

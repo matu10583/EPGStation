@@ -14,5 +14,7 @@ export default interface ISocketIOManageModel {
     notifyNicoliveComment(channelId: string,data: NicoliveCommentData): void;
     onJoinNicoLiveComment(callback: (data: NicoliveRoomData) => void): void
     offJoinNicoLiveComment(callback: (data: NicoliveRoomData) => void): void
+    onLeaveNicoLiveComment(callback: (data: NicoliveRoomData) => void): void
+    offLeaveNicoLiveComment(callback: (data: NicoliveRoomData) => void): void
 
 }

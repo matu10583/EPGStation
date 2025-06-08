@@ -12,5 +12,5 @@ export interface MessageServer extends MsgBase {
 export default interface INicoliveMessageClient{
     connect(url: string):void;
     disconnect(code?: number, reason?: string):void;
-    set onRecieveMessageServer(callback: (msg: MessageServer) => any | null);
+    set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null);
 }

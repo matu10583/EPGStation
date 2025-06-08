@@ -106,6 +106,13 @@ export default class SocketIOManageModel implements ISocketIOManageModel {
     public offJoinNicoLiveComment(callback: (data: NicoliveRoomData) => void): void {
         this.nicoliveJoinCallbacks.delete(callback);
     }
+    public onLeaveNicoLiveComment(callback: (data: NicoliveRoomData) => void): void {
+        this.nicoliveLeaveCallbacks.add(callback);
+    }
+
+    public offLeaveNicoLiveComment(callback: (data: NicoliveRoomData) => void): void {
+        this.nicoliveLeaveCallbacks.delete(callback);
+    }
 
         /**
      * client へコメント通知

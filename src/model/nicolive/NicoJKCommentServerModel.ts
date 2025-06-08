@@ -1,47 +1,80 @@
 import { inject, injectable } from 'inversify';
 import INicoJKCommentServerModel from './INicoJKCommentServerModel';
 import ILoggerModel from '../ILoggerModel';
-import ISocketIOManageModel from '../service/socketio/ISocketIOManageModel';
 import ILogger from '../ILogger';
 import INicoliveCommentFetcher from '../../lib/nicolive/INicoliveCommentFetcher';
 import IConfiguration from '../IConfiguration';
 import IConfigFile from '../IConfigFile';
+import INicoliveCommentFetcherFactory from '../../lib/nicolive/INicoliveCommentFetcherFactory';
+import ISocketIOManageModel, { NicoliveCommentData } from '../service/socketio/ISocketIOManageModel';
 
 @injectable()
 export default class NicoJKCommentServerModel implements INicoJKCommentServerModel {
-    private socketIO: ISocketIOManageModel;
     private log: ILogger;
-    private comment_fetcher: INicoliveCommentFetcher;
+    private comment_fetchers: Map<string, INicoliveCommentFetcher> = new Map();
     private config: IConfigFile;
 
     constructor(
         @inject('ILoggerModel') logger: ILoggerModel,
-        @inject('ISocketIOManageModel') socketIO: ISocketIOManageModel,
-        @inject('INicoliveCommentFetcher') comment_fetcher: INicoliveCommentFetcher,
         @inject('IConfiguration') configuration: IConfiguration,
+        @inject('INicoliveCommentFetcherFactory')cmt_factory: INicoliveCommentFetcherFactory,
+        @inject('ISocketIOManageModel') socketIO: ISocketIOManageModel
     ) {
         this.log = logger.getLogger();
-        this.socketIO = socketIO;
-        this.comment_fetcher = comment_fetcher;
         this.config = configuration.getConfig();
+
+        const nicolive = this.config.nicoLive;
+        if(nicolive==null){
+            return;
+        }
+        for(const setting of nicolive.jk_url){
+            const fetcher = cmt_factory.create(setting.url);
+            fetcher.onRecieveComment((msg)=>{
+                socketIO.notifyNicoliveComment(setting.channel, msg);
+            })
+            this.comment_fetchers.set(setting.channel, fetcher);
+        }
     }
 
-    private registerSocketCallback(){
-        this.socketIO.onJoinNicoLiveComment(
-            (data)=>{
-                const url = this.convertChannelToURL(data.channelId);
-                if(url == undefined){
-                    this.log.system.error("cannot find nicojk url: ", data.channelId);
-                    return;
-                }
-                //接続インスタンス
-            }
-        )
+    public getConnectionRefCount(channelId: string): number {
+        const fetcher = this.getCommentFetcher(channelId);
+        if(fetcher===null) return -1;
+        return fetcher.getConnectionRefCount();
     }
 
-    private convertChannelToURL(chId: string): string|undefined{
-        return this.config.nicoLive?.jk_url.find(item=>item.channel===chId)?.url;
+    public async addConnection(channelId: string):Promise<number>{
+        const fetcher = this.getCommentFetcher(channelId);
+        if(fetcher===null) return -1;
+        const result = await fetcher.addConnection();
+        return result;
     }
+
+    public onRecieveComment(channelId: string, callback: ((msg:NicoliveCommentData)=>any)){
+        const fetcher = this.getCommentFetcher(channelId);
+        if(fetcher===null) return;
+        fetcher.onRecieveComment(callback);
+    }
+    public offRecieveComment(channelId: string, callback: ((msg:NicoliveCommentData)=>any)){
+        const fetcher = this.getCommentFetcher(channelId);
+        if(fetcher===null) return;
+        fetcher.offRecieveComment(callback);
+    }
+
+    public decreaseConnection(channelId: string):number{
+        const fetcher = this.getCommentFetcher(channelId);
+        if(fetcher===null) return -1;
+        return fetcher.decreaseConnection();
+    }
+
+    private getCommentFetcher(channelId: string): INicoliveCommentFetcher| null{
+        const ret =  this.comment_fetchers.get(channelId);
+        if(ret === undefined){
+            this.log.system.error("do not exist url in settings. channelID: ", channelId);
+            return null;
+        }
+        return ret;
+    }
+
 
     
 }

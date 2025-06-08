@@ -1,7 +1,7 @@
 import NicoliveWebSocket from './NicoliveWebSocket';
 import INicoliveWebSocket from './INicoliveWebSocket';
 import INicoliveMessageClient, {MessageServer, MsgBase} from './INicoliveMessageClient';
-import { inject, injectable } from 'inversify';
+import {  injectable } from 'inversify';
 
 
 interface Seat extends MsgBase {
@@ -23,12 +23,10 @@ interface Error extends MsgBase {
 
 @injectable()
 export default class NicoliveMessageClient implements INicoliveMessageClient {
-    private socket!: INicoliveWebSocket;
+    private socket: INicoliveWebSocket|null = null;
     private _onRecieveMessageServer: ((msg: MessageServer) => any) | null = null;
-    constructor(
-        @inject('INicoliveWebSocket') _soc: INicoliveWebSocket,
-    ) {
-        this.socket = _soc;
+    private interval_id: NodeJS.Timer| null=null;;
+    constructor() {
     }
 
     public async connect(url: string) {
@@ -46,7 +44,7 @@ export default class NicoliveMessageClient implements INicoliveMessageClient {
                 console.error('Invalid Json');
             }
         };
-        this.socket.onclose = event => {
+        this.socket.onclose = () => {
             console.log('Connect Closed ', url);
         };
         this.socket.onerror = error => {
@@ -55,10 +53,17 @@ export default class NicoliveMessageClient implements INicoliveMessageClient {
     }
 
     public disconnect(code?: number, reason?: string) {
+        if(this.socket===null) return;
         this.socket.close(code, reason);
+        this.socket = null;
+        if(this.interval_id!==null){
+            clearInterval(this.interval_id);
+            this.interval_id = null;
+        }
     }
 
     private sendWelcome() {
+        if(this.socket===null) return;
         const welcome_msg =
             '{"type":"startWatching","data":{"stream":{"quality":"abr","protocol":"hls","latency":"high","chasePlay":false},"room":{"protocol":"webSocket","commentable":true},"reconnect":false}}';
 
@@ -87,22 +92,27 @@ export default class NicoliveMessageClient implements INicoliveMessageClient {
     }
 
     private keepSeat(msg: Seat) {
+        if(this.socket===null) return;
         console.log('seat');
-        setInterval(() => {
+        this.interval_id = setInterval(() => {
+            if(this.socket===null) return;
             const send_msg = '{"type":"keepSeat"}';
             this.socket.send(send_msg);
         }, msg.data.keepIntervalSec);
     }
     private pong() {
+        if(this.socket===null) return;
         console.log('pong');
         const send_msg = '{"type":"keepSeat"}';
         this.socket.send(send_msg);
     }
 
     private disconnected(msg: Disconnect) {
+        if(this.socket===null) return;
         console.log('disconnect: ', msg.data.reason);
     }
     private error(msg: Error) {
+        if(this.socket===null) return;
         console.log('error: ', msg.body.code);
     }
     private processMessageServer(msg: MessageServer) {
@@ -111,7 +121,7 @@ export default class NicoliveMessageClient implements INicoliveMessageClient {
             this._onRecieveMessageServer(msg);
         }
     }
-    public set onRecieveMessageServer(callback: (msg: MessageServer) => any | null) {
+    public set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null) {
         this._onRecieveMessageServer = callback;
     }
 }

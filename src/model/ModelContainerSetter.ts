@@ -160,12 +160,10 @@ import HLSFileDeleterModel from './service/stream/util/HLSFileDeleterModel';
 import IHLSFileDeleterModel from './service/stream/util/IHLSFileDeleterModel';
 import INicoJKCommentServerModel from './nicolive/INicoJKCommentServerModel';
 import NicoJKCommentServerModel from './nicolive/NicoJKCommentServerModel';
-import INicoliveWebSocket from '../lib/nicolive/INicoliveWebSocket';
-import NicoliveWebSocket from '../lib/nicolive/NicoliveWebSocket';
-import INicoliveCommentFetcher from '../lib/nicolive/INicoliveCommentFetcher';
-import NicoliveCommentFetcher from '../lib/nicolive/NicoliveCommentFetcher';
-import INicoliveMessageClient from '../lib/nicolive/INicoliveMessageClient';
-import NicoliveMessageClient from '../lib/nicolive/NicoliveMessageClient';
+import INicoliveCommentFetcherFactory from '../lib/nicolive/INicoliveCommentFetcherFactory';
+import NicoliveCommentFetcherFactory from '../lib/nicolive/NicoliveCommentFetcherFactory';
+import INicoJKCommentServerManager from './nicolive/INicoJKCommentServerManager';
+import NicoJKCommentServerManager from './nicolive/NicoJKCommentServerManager';
 
 /**
  * container に 各 Model を登録する
@@ -189,11 +187,9 @@ export const set = (container: Container): void => {
 
     container.bind<INicoJKCommentServerModel>('INicoliveCommentServer').to(NicoJKCommentServerModel).inSingletonScope();
 
-    container.bind<INicoliveCommentFetcher>('INicoliveCommentFetcher').to(NicoliveCommentFetcher).inSingletonScope();
+    container.bind<INicoJKCommentServerManager>('INicoJKCommentServerManager').to(NicoJKCommentServerManager).inSingletonScope();
     
-    container.bind<INicoliveMessageClient>('INicoliveMessageClient').to(NicoliveMessageClient).inSingletonScope();
-    
-    container.bind<INicoliveWebSocket>('INicoliveWebSocket').to(NicoliveWebSocket).inSingletonScope();
+    container.bind<INicoliveCommentFetcherFactory>('INicoliveCommentServer').to(NicoliveCommentFetcherFactory).inSingletonScope();
 
     container.bind<IDBOperator>('IDBOperator').to(DBOperator).inSingletonScope();
 
