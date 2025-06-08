@@ -6,5 +6,12 @@
     "yaml.schemas": {
         "http://json.schemastore.org/swagger-2.0": ["api.yml"]
     },
-    "vetur.format.defaultFormatter.html": "prettier"
+    "vetur.format.defaultFormatter.html": "prettier",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "/bin/bash",
+            "args": ["--login"]
+        }
+    },
+    "terminal.integrated.defaultProfile.linux": "bash"
 }

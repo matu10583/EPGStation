@@ -3,7 +3,11 @@
         <TitleBar title="視聴"></TitleBar>
         <transition name="page">
             <div class="video-container-wrap mx-auto">
-                <VideoContainer v-if="videoParam !== null" v-bind:videoParam="videoParam"></VideoContainer>
+                <div class="video-size-wrap mx-auto" style="position: relative">
+                    <VideoContainer v-if="videoParam !== null" v-bind:videoParam="videoParam"></VideoContainer>
+                    <CommentOverlay v-if="showComments" :comments="comments"></CommentOverlay>
+                </div>
+                <v-switch v-model="showComments" label="ニコニコ実況を表示" class="mt-4" inset></v-switch>
                 <WatchOnAirInfoCard v-if="watchParam !== null" v-bind:channel="watchParam.channel" v-bind:mode="watchParam.mode"></WatchOnAirInfoCard>
                 <div style="visibility: hidden">dummy</div>
             </div>
@@ -22,6 +26,7 @@ import ISnackbarState from '@/model/state/snackbar/ISnackbarState';
 import Util from '@/util/Util';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import * as apid from '../../../api';
+import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
 
 Component.registerHooks(['beforeRouteUpdate', 'beforeRouteLeave']);
 
@@ -30,12 +35,18 @@ interface WatchParam {
     channel: apid.ChannelId;
     mode: number;
 }
+interface CommentItem {
+    text: string;
+    top: number;
+    fontSize: number;
+}
 
 @Component({
     components: {
         TitleBar,
         VideoContainer,
         WatchOnAirInfoCard,
+        CommentOverlay,
     },
 })
 export default class WatchOnAir extends Vue {
@@ -45,6 +56,9 @@ export default class WatchOnAir extends Vue {
     private snackbarState: ISnackbarState = container.get<ISnackbarState>('ISnackbarState');
 
     private watchParam: WatchParam | null = null;
+    //コメントトグル
+    public showComments: boolean = false;
+    public comments: CommentItem[] = [];
 
     @Watch('$route', { immediate: true, deep: true })
     public onUrlChange(): void {
@@ -82,6 +96,24 @@ export default class WatchOnAir extends Vue {
             // データ取得完了を通知
             await this.scrollState.emitDoneGetData();
         });
+    }
+
+    @Watch('showComments')
+    onToggleComments(val: boolean): void {
+    }
+
+    public mounted(): void {
+        setInterval(() => {
+            if (this.showComments) {
+                console.log('Add Comment!');
+                this.comments.push({
+                    text: 'テストコメント' + new Date().toLocaleTimeString(),
+                    top: Math.floor(Math.random() * 100),
+                    fontSize: 16,
+                });
+                if (this.comments.length > 10) this.comments.shift();
+            }
+        }, 500);
     }
 }
 </script>

@@ -158,6 +158,14 @@ import RecordedHLSStreamModel from './service/stream/RecordedHLSStreamModel';
 import RecordedStreamModel from './service/stream/RecordedStreamModel';
 import HLSFileDeleterModel from './service/stream/util/HLSFileDeleterModel';
 import IHLSFileDeleterModel from './service/stream/util/IHLSFileDeleterModel';
+import INicoJKCommentServerModel from './nicolive/INicoJKCommentServerModel';
+import NicoJKCommentServerModel from './nicolive/NicoJKCommentServerModel';
+import INicoliveWebSocket from '../lib/nicolive/INicoliveWebSocket';
+import NicoliveWebSocket from '../lib/nicolive/NicoliveWebSocket';
+import INicoliveCommentFetcher from '../lib/nicolive/INicoliveCommentFetcher';
+import NicoliveCommentFetcher from '../lib/nicolive/NicoliveCommentFetcher';
+import INicoliveMessageClient from '../lib/nicolive/INicoliveMessageClient';
+import NicoliveMessageClient from '../lib/nicolive/NicoliveMessageClient';
 
 /**
  * container に 各 Model を登録する
@@ -178,6 +186,14 @@ export const set = (container: Container): void => {
     container.bind<IIPCClient>('IIPCClient').to(IPCClient).inSingletonScope();
 
     container.bind<IIPCServer>('IIPCServer').to(IPCServer).inSingletonScope();
+
+    container.bind<INicoJKCommentServerModel>('INicoliveCommentServer').to(NicoJKCommentServerModel).inSingletonScope();
+
+    container.bind<INicoliveCommentFetcher>('INicoliveCommentFetcher').to(NicoliveCommentFetcher).inSingletonScope();
+    
+    container.bind<INicoliveMessageClient>('INicoliveMessageClient').to(NicoliveMessageClient).inSingletonScope();
+    
+    container.bind<INicoliveWebSocket>('INicoliveWebSocket').to(NicoliveWebSocket).inSingletonScope();
 
     container.bind<IDBOperator>('IDBOperator').to(DBOperator).inSingletonScope();
 

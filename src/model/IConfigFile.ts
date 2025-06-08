@@ -36,6 +36,13 @@ export interface KodiInfo {
     password?: string;
 }
 
+export interface NicoliveInfo{
+    jk_url: {
+        channel: string,
+        url: string,
+    }[]
+}
+
 /**
  * config ファイル形式
  */
@@ -190,4 +197,5 @@ export default interface IConfigFile {
 
     // 配信先 kodi 設定
     kodiHosts?: KodiInfo[];
+    nicoLive?: NicoliveInfo;
 }
