@@ -4,7 +4,6 @@ import Util from '../../util/Util';
 import IServerConfigModel from '../serverConfig/IServerConfigModel';
 import ISocketIOModel from './ISocketIOModel';
 
-
 @injectable()
 class SocketIOModel implements ISocketIOModel {
     private serverConfiModel: IServerConfigModel;
@@ -83,7 +82,7 @@ class SocketIOModel implements ISocketIOModel {
         this.io.off(SocketIOModel.UPDATE_ENCODE_STATUS_EVENT, callback);
     }
 
-        /**
+    /**
      * recieve nicolive comments イベントへのコールバック追加
      * @param callback: () => void
      */
@@ -92,7 +91,7 @@ class SocketIOModel implements ISocketIOModel {
             throw new Error('IOIsNull');
         }
 
-        this.io.on(SocketIOModel.RECIEVE_NICOLIVE_COMMENT, callback);
+        this.io.on(SocketIOModel.RECIEVE_NICOLIVE_CHAT, callback);
     }
 
     /**
@@ -104,44 +103,42 @@ class SocketIOModel implements ISocketIOModel {
             throw new Error('IOIsNull');
         }
 
-        this.io.off(SocketIOModel.RECIEVE_NICOLIVE_COMMENT, callback);
+        this.io.off(SocketIOModel.RECIEVE_NICOLIVE_CHAT, callback);
     }
 
     /**
      * nicolive commentのサーバーへ接続
      * @param callback: () => void
      */
-    public startNicoliveCommentServer(channelId: number): void{
+    public startNicoliveCommentServer(channelId: string): void {
         if (this.io === null) {
             throw new Error('IOIsNull');
         }
-        this.io.emit(SocketIOModel.START_NICOLIVE_COMMENT,{
-            id: channelId
+        this.io.emit(SocketIOModel.START_NICOLIVE_COMMENT, {
+            channelId: channelId,
         });
     }
-    
+
     /**
      * nicolive commentのサーバーを切断
      * @param callback: () => void
      */
-    public closeNicoliveCommentServer(channelId: number){
+    public closeNicoliveCommentServer(channelId: string) {
         if (this.io === null) {
             throw new Error('IOIsNull');
         }
         this.io.emit(SocketIOModel.CLOSE_NICOLIVE_COMMENT, {
-            id: channelId
+            channelId: channelId,
         });
     }
-
-
 }
 
 namespace SocketIOModel {
     export const UPDATE_STATUS_EVENT = 'updateStatus';
     export const UPDATE_ENCODE_STATUS_EVENT = 'updateEncode';
-    export const RECIEVE_NICOLIVE_COMMENT = 'recieveNicoLive';
-    export const START_NICOLIVE_COMMENT = 'joinNicoLive';
-    export const CLOSE_NICOLIVE_COMMENT = 'leaveNicoLive';
+    export const RECIEVE_NICOLIVE_CHAT = 'nicoliveChat';
+    export const START_NICOLIVE_COMMENT = 'joinNicolive';
+    export const CLOSE_NICOLIVE_COMMENT = 'leaveNicolive';
 }
 
 export default SocketIOModel;

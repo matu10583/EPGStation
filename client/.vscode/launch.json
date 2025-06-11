@@ -1,6 +1,17 @@
 {
-  "extends": [
-    "tslint:latest"
-  ]
+    "extends": [
+        "tslint:latest"
+    ],
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "vuejs: chrome",
+            "url": "http://192.168.68.57:8001",
+            "webRoot": "${workspaceFolder}/src",
+            "sourceMapPathOverrides": {
+                "webpack:///src/*": "${webRoot}/*"
+            }
+        },
+    ]
 }
-

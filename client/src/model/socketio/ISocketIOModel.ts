@@ -9,4 +9,8 @@ export default interface ISocketIOModel {
     offUpdateState(callback: () => void): void;
     onUpdateEncodeState(callback: () => void): void;
     offUpdateEncodeState(callback: () => void): void;
+    onRecieveNicoLiveComment(callback: () => void): void;
+    offRecieveNicoLiveComment(callback: () => void): void;
+    startNicoliveCommentServer(channelId: string): void;
+    closeNicoliveCommentServer(channelId: string): void;
 }

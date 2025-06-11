@@ -36,11 +36,11 @@ export interface KodiInfo {
     password?: string;
 }
 
-export interface NicoliveInfo{
+export interface NicoliveInfo {
     jk_url: {
-        channel: string,
-        url: string,
-    }[]
+        channel: string;
+        url: string;
+    }[];
 }
 
 /**

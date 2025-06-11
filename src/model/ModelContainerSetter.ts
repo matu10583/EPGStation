@@ -158,12 +158,19 @@ import RecordedHLSStreamModel from './service/stream/RecordedHLSStreamModel';
 import RecordedStreamModel from './service/stream/RecordedStreamModel';
 import HLSFileDeleterModel from './service/stream/util/HLSFileDeleterModel';
 import IHLSFileDeleterModel from './service/stream/util/IHLSFileDeleterModel';
-import INicoJKCommentServerModel from './nicolive/INicoJKCommentServerModel';
-import NicoJKCommentServerModel from './nicolive/NicoJKCommentServerModel';
-import INicoliveCommentFetcherFactory from '../lib/nicolive/INicoliveCommentFetcherFactory';
-import NicoliveCommentFetcherFactory from '../lib/nicolive/NicoliveCommentFetcherFactory';
+import INicoliveCommentServerModel, {
+    NicoliveCommentServerModelFactory,
+    NicoliveCommentServerConfig,
+} from '../lib/nicolive/INicoliveCommentServerModel';
 import INicoJKCommentServerManager from './nicolive/INicoJKCommentServerManager';
 import NicoJKCommentServerManager from './nicolive/NicoJKCommentServerManager';
+import NicoliveWebSocketClient from '../lib/nicolive/NicoliveWebSocketClient';
+import NicoliveCommentFetcher from '../lib/nicolive/NicoliveCommentFetcher';
+import NicoliveCommentServerModel from '../lib/nicolive/NicoliveCommentServerModel';
+import NicoliveMessageServerClient from '../lib/nicolive/NicoliveMessageServerClient';
+import { NicoliveSegmentServerClientFactory } from '../lib/nicolive/INicoliveSegmentServerClient';
+import NicoliveSegmentServerClient from '../lib/nicolive/NicoliveSegmentServerClient';
+import { MessageSegment } from '../lib/proto';
 
 /**
  * container に 各 Model を登録する
@@ -185,11 +192,30 @@ export const set = (container: Container): void => {
 
     container.bind<IIPCServer>('IIPCServer').to(IPCServer).inSingletonScope();
 
-    container.bind<INicoJKCommentServerModel>('INicoliveCommentServer').to(NicoJKCommentServerModel).inSingletonScope();
+    container.bind<INicoliveCommentServerModel>('INicoliveCommentServerModel').to(NicoliveCommentServerModel);
+    container.bind<NicoliveCommentServerModelFactory>('NicoliveCommentServerModelFactory').toFactory(context => {
+        return (config: NicoliveCommentServerConfig) => {
+            const server = context.container.get<INicoliveCommentServerModel>('INicoliveCommentServerModel');
+            const ws_client = new NicoliveWebSocketClient();
+            const msg_client = new NicoliveMessageServerClient();
+            const seg_factory = context.container.get<NicoliveSegmentServerClientFactory>(
+                'NicoliveSegmentServerClientFactory',
+            );
+            server.init(new NicoliveCommentFetcher(ws_client, msg_client, seg_factory, config.url));
+            return server;
+        };
+    });
 
-    container.bind<INicoJKCommentServerManager>('INicoJKCommentServerManager').to(NicoJKCommentServerManager).inSingletonScope();
-    
-    container.bind<INicoliveCommentFetcherFactory>('INicoliveCommentServer').to(NicoliveCommentFetcherFactory).inSingletonScope();
+    container.bind<NicoliveSegmentServerClientFactory>('NicoliveSegmentServerClientFactory').toFactory(() => {
+        return (msg: MessageSegment) => {
+            return new NicoliveSegmentServerClient(msg.uri);
+        };
+    });
+
+    container
+        .bind<INicoJKCommentServerManager>('INicoJKCommentServerManager')
+        .to(NicoJKCommentServerManager)
+        .inSingletonScope();
 
     container.bind<IDBOperator>('IDBOperator').to(DBOperator).inSingletonScope();
 

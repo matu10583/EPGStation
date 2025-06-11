@@ -1,5 +1,3 @@
-
-
 export interface MsgBase {
     type: string;
 }
@@ -9,8 +7,9 @@ export interface MessageServer extends MsgBase {
         vposBaseTime: string;
     };
 }
-export default interface INicoliveMessageClient{
-    connect(url: string):void;
-    disconnect(code?: number, reason?: string):void;
+export default interface INicoliveWebSocketClient {
+    connect(url: string): void;
+    disconnect(code?: number, reason?: string): void;
+    connected(): boolean;
     set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null);
 }

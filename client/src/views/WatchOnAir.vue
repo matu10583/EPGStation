@@ -27,6 +27,7 @@ import Util from '@/util/Util';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import * as apid from '../../../api';
 import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
+import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 
 Component.registerHooks(['beforeRouteUpdate', 'beforeRouteLeave']);
 
@@ -59,6 +60,7 @@ export default class WatchOnAir extends Vue {
     //コメントトグル
     public showComments: boolean = false;
     public comments: CommentItem[] = [];
+    private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
 
     @Watch('$route', { immediate: true, deep: true })
     public onUrlChange(): void {
@@ -100,6 +102,18 @@ export default class WatchOnAir extends Vue {
 
     @Watch('showComments')
     onToggleComments(val: boolean): void {
+        const chnum = this.watchParam?.channel;
+        if (chnum == undefined) {
+            console.log('miss channel number');
+            return;
+        }
+        console.log('channel number: ', chnum);
+
+        if (this.showComments) {
+            this.socketIoModel.startNicoliveCommentServer(chnum.toString());
+        } else {
+            this.socketIoModel.closeNicoliveCommentServer(chnum.toString());
+        }
     }
 
     public mounted(): void {
