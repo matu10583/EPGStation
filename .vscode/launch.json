@@ -1,3 +1,21 @@
 {
-    "extends": ["eslint:latest"]
+      "version": "0.2.0",
+    "extends": ["eslint:latest"],
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug npm start",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  ]
 }

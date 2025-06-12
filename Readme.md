@@ -1,3 +1,8 @@
+# はじめに
+
+matu10583がforkして自分の使い勝手のいいように改造しているバージョンです。
+自分しか使わない前提でバグチェックとかもしてないのでこちらを使って何かあっても責任取れません。
+
 # EPGStation
 
 [Mirakurun](https://github.com/Chinachu/Mirakurun) を使用した録画管理ソフトです  

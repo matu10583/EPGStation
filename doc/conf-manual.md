@@ -1106,3 +1106,44 @@ kodiHosts:
 ```
 
 [kodi.md](./kodi.md)
+
+## 改造部分
+
+- 特にデバッグしてないから致命的なバグがあるかも。dockerのマウントでぷジェクトファイル丸ごと置き換えて使うとよい。recordedやconfigなど必要なものは個別でマウントしてね。問題があったら公式イメージのファイルに戻してください。
+
+### nicoLive
+
+#### ニコニコ実況URL指定
+
+個人用で作ったもので特にサポートとかはないです。使ってて致命的な不具合があれば修正します。
+
+channelId(視聴ページのURL部分のリクエストにあるやつ)と視聴ページの紐づけです。非公式の番組は番組ごとにURL変わるので非対応です。公式はURLは同一なのでそれを使用。
+
+設定されていないチャンネルで「ニコニコ実況を表示」を押しても何も起こらないです。（やる気があったら対応する）
+
+```yaml
+nicoLive:
+    jk_url:
+      - channel: 3273601024
+        url: https://live.nicovideo.jp/watch/ch2646436  # NHK総合（東京）
+      - channel: 3273701032
+        url: https://live.nicovideo.jp/watch/ch2646437  # NHK Eテレ（東京）
+      - channel: 3273801040
+        url: https://live.nicovideo.jp/watch/ch2646438  # 日本テレビ（NTV）
+      - channel: 3274101064
+        url: https://live.nicovideo.jp/watch/ch2646439  # テレビ朝日（EX）
+      - channel: 3273901048
+        url: https://live.nicovideo.jp/watch/ch2646440  # TBSテレビ（TBS）
+      - channel: 3274201072
+        url: https://live.nicovideo.jp/watch/ch2646441  # テレビ東京（TX）
+      - channel: 3274001056
+        url: https://live.nicovideo.jp/watch/ch2646442  # フジテレビ（CX）
+      - channel: 3239123608
+        url: https://live.nicovideo.jp/watch/ch2646485  # TOKYO MX（MX）
+
+```
+
+#### 今後実装したい機能
+
+- コメント投稿機能
+- 録画時にコメントデータを保存し、アーカイブでコメントを表示
