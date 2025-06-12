@@ -85,7 +85,7 @@ export default class CommentOverlay extends Vue {
         this.canvasEl.width = parent.clientWidth;
         this.canvasEl.height = parent.clientHeight;
         this.ctx = this.canvasEl.getContext('2d');
-        if(!this.ctx) return;
+        if (!this.ctx) return;
 
         this.resizeFontFromCanvasSize(this.canvasEl.width, this.canvasEl.height);
 
@@ -104,11 +104,11 @@ export default class CommentOverlay extends Vue {
         requestAnimationFrame(this.update.bind(this));
     }
 
-    private resizeFontFromCanvasSize(width: number, height: number){
-        if(!this.ctx) return;
-        const fontsize = height/15;
+    private resizeFontFromCanvasSize(width: number, height: number) {
+        if (!this.ctx) return;
+        const fontsize = height / 15;
         this.ctx.font = `${fontsize}px sans-serif`;
-        this.ctx.lineWidth = fontsize/15;
+        this.ctx.lineWidth = fontsize / 15;
     }
 
     beforeUnmount() {

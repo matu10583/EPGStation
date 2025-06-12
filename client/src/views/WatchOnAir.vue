@@ -63,7 +63,7 @@ export default class WatchOnAir extends Vue {
     public showComments: boolean = false;
     private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
     private commentOverlay: CommentOverlay | null = null;
-    private recieveCallback:(msg: NicoJKChunkedMessage)=>void = this.onReciveComment.bind(this);
+    private recieveCallback: (msg: NicoJKChunkedMessage) => void = this.onReciveComment.bind(this);
 
     @Watch('$route', { immediate: true, deep: true })
     public onUrlChange(): void {
@@ -120,8 +120,10 @@ export default class WatchOnAir extends Vue {
     }
 
     public mounted(): void {
-        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveCallback);
         this.socketIoModel.onRecieveNicoLiveMessage(this.recieveCallback);
+    }
+    public beforeDestroy() {
+        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveCallback);
     }
 
     private onReciveComment(msg: NicoJKChunkedMessage) {
