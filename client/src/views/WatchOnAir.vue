@@ -3,9 +3,9 @@
         <TitleBar title="視聴"></TitleBar>
         <transition name="page">
             <div class="video-container-wrap mx-auto">
-                <div class="video-size-wrap mx-auto" style="position: relative">
+                <div class="video-size-wrap mx-auto">
                     <VideoContainer v-if="videoParam !== null" v-bind:videoParam="videoParam"></VideoContainer>
-                    <CommentOverlay v-if="showComments" :comments="comments"></CommentOverlay>
+                    <CommentOverlay v-if="showComments" ref="overlay"></CommentOverlay>
                 </div>
                 <v-switch v-model="showComments" label="ニコニコ実況を表示" class="mt-4" inset></v-switch>
                 <WatchOnAirInfoCard v-if="watchParam !== null" v-bind:channel="watchParam.channel" v-bind:mode="watchParam.mode"></WatchOnAirInfoCard>
@@ -28,6 +28,8 @@ import { Component, Vue, Watch } from 'vue-property-decorator';
 import * as apid from '../../../api';
 import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
 import ISocketIOModel from '@/model/socketio/ISocketIOModel';
+import * as proto from '@/gen/proto';
+type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 
 Component.registerHooks(['beforeRouteUpdate', 'beforeRouteLeave']);
 
@@ -59,8 +61,9 @@ export default class WatchOnAir extends Vue {
     private watchParam: WatchParam | null = null;
     //コメントトグル
     public showComments: boolean = false;
-    public comments: CommentItem[] = [];
     private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
+    private commentOverlay: CommentOverlay | null = null;
+    private recieveCallback:(msg: NicoJKChunkedMessage)=>void = this.onReciveComment.bind(this);
 
     @Watch('$route', { immediate: true, deep: true })
     public onUrlChange(): void {
@@ -117,17 +120,17 @@ export default class WatchOnAir extends Vue {
     }
 
     public mounted(): void {
-        setInterval(() => {
-            if (this.showComments) {
-                console.log('Add Comment!');
-                this.comments.push({
-                    text: 'テストコメント' + new Date().toLocaleTimeString(),
-                    top: Math.floor(Math.random() * 100),
-                    fontSize: 16,
-                });
-                if (this.comments.length > 10) this.comments.shift();
-            }
-        }, 500);
+        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveCallback);
+        this.socketIoModel.onRecieveNicoLiveMessage(this.recieveCallback);
+    }
+
+    private onReciveComment(msg: NicoJKChunkedMessage) {
+        if (msg.message?.chat?.content) {
+            // console.log(msg.message.chat.content);
+            // console.log(msg.message.chat.vpos);
+            this.commentOverlay = this.$refs.overlay as CommentOverlay;
+            this.commentOverlay?.addComment(msg.message.chat.content);
+        }
     }
 }
 </script>
@@ -135,4 +138,6 @@ export default class WatchOnAir extends Vue {
 <style lang="sass" scoped>
 .video-container-wrap
     max-width: 1200px
+.video-size-wrap
+    position: relative
 </style>
