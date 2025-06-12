@@ -19,28 +19,25 @@ export default class NicoliveSegmentServerClient implements INicoliveSegmentServ
 
     public async runConnect() {
         this.abortController = new AbortController();
-        while (!this.abortController.signal.aborted) {
-            try {
-                const response = await fetch(this.baseurl, {
-                    signal: this.abortController?.signal,
-                });
+        try {
+            const response = await fetch(this.baseurl, {
+                signal: this.abortController?.signal,
+            });
 
-                for await (const chunk of decodeChunkStream(
-                    proto.ChunkedMessageSchema,
-                    response.body as ReadableStream<Uint8Array>,
-                )) {
-                    if (this.onRecieveComment !== null) {
-                        this.onRecieveComment(chunk);
-                    }
-                }
-            } catch (e) {
-                if (e == 'OperationCanceledException') {
-                    //正常な終了
-                    this.abortController?.abort();
-                } else {
-                    console.error('error has occured. try reconnecting');
+            for await (const chunk of decodeChunkStream(
+                proto.ChunkedMessageSchema,
+                response.body as ReadableStream<Uint8Array>,
+            )) {
+                if (this.onRecieveComment !== null) {
+                    this.onRecieveComment(chunk);
                 }
             }
+        } catch (e) {
+            console.error('error has occured. try reconnecting', e);
         }
+        this.abortController.abort();
+        // while (!this.abortController.signal.aborted) {
+
+        // }
     }
 }

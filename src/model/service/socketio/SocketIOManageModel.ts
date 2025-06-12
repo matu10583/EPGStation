@@ -14,7 +14,7 @@ import {
     ChunkedEntry as NicoJKEntry,
     ChunkedEntrySchema as NicoJKEntrySchema,
 } from '../../../lib/gen/epgstation/nicojk/service/edge/ChunkedEntry_pb';
-import { fromJson } from '@bufbuild/protobuf';
+import { fromBinary } from '@bufbuild/protobuf';
 // import { fromJson } from '@bufbuild/protobuf';
 
 interface SocketData {
@@ -60,11 +60,17 @@ export default class SocketIOManageModel implements ISocketIOManageModel {
     private registerNicoJKCallback(io: SocketIO.Server) {
         io.on('connection', socket => {
             this.log.system.info('connect socket');
-            socket.on('joinNicolive', async (req) => {
-                const decoded = fromJson(NicoJKEntrySchema, req);
+            socket.data.nicoliveRoomData = null;
+            socket.on('joinNicolive', async (req: ArrayBuffer) => {
+                try{
+                const decoded = fromBinary(NicoJKEntrySchema, new Uint8Array(req));
                 const nicoJKManager = container.get<INicoJKCommentServerManager>('INicoJKCommentServerManager');
                 await nicoJKManager.connectClient(socket, decoded);
                 socket.data.nicoliveRoomData = decoded;
+                }
+                catch(e){
+                    console.error(e);
+                }
             });
 
             socket.on('leaveNicolive', () => {
@@ -73,6 +79,7 @@ export default class SocketIOManageModel implements ISocketIOManageModel {
                 socket.data.nicoliveRoomData = null;
             });
             socket.on('disconnecting', () => {
+                if(socket.data.nicoliveRoomData===null) return;
                 const nicoJKManager = container.get<INicoJKCommentServerManager>('INicoJKCommentServerManager');
                 nicoJKManager.disconnectClient(socket, socket.data.nicoliveRoomData);
                 socket.data.nicoliveRoomData = null;

@@ -64,6 +64,10 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         this.seg_clients = this.seg_clients.filter(c => {
             return c.connected();
         });
+        // for(const seg of this.seg_clients){
+        //     seg.disconnect();
+        // }
+        // this.seg_clients.length=0;
         this.seg_clients.push(seg);
     }
 

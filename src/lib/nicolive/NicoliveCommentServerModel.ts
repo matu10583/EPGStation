@@ -2,7 +2,8 @@ import { injectable } from 'inversify';
 import INicoliveCommentServerModel from './INicoliveCommentServerModel';
 import INicoliveCommentFetcher from './INicoliveCommentFetcher';
 import * as SocketIO from 'socket.io';
-import { ChunkedMessage, ChunkedMessage_Meta, NicoliveMessage } from '../proto';
+import { ChunkedMessage, ChunkedMessageSchema } from '../proto';
+import { toBinary } from '@bufbuild/protobuf';
 
 @injectable()
 export default class NicoliveCommentServerModel implements INicoliveCommentServerModel {
@@ -57,27 +58,10 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
     // }
 
     private broadcastComments(msg: ChunkedMessage) {
-        //今のとこ必要なデータは限定的なので絞っておく
-        switch(msg.payload.case){
-            case "message":
-                this.broadcastMessage(msg.payload.value, msg.meta);
-            break;
-            default:
-                break;
-        }
-
+        const chunk = toBinary(ChunkedMessageSchema, msg);
+        this.emitAllSocet("nicoliveMessage", chunk);
     }
 
-    //TODO: イベント名どっかに変数で保存しとく
-    private broadcastMessage(message: NicoliveMessage, meta: ChunkedMessage_Meta|undefined){
-        switch(message.data.case){
-            case "chat":
-            this.emitAllSocet('nicoliveChat', message.data.value, meta);
-                break;
-            default:
-                break;
-        }
-    }
 
     private emitAllSocet(ev:string, ...args:any[]){
         for (const c of this.clients) {

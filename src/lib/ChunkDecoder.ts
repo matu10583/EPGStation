@@ -14,7 +14,8 @@ export async function* decodeChunkStream<T extends DescMessage>(
         }
 
         decoder.push(value);
-        for (const chunk of decoder.read()) {
+        const chunks = decoder.read();
+        for (const chunk of chunks) {
             yield chunk;
         }
     }
