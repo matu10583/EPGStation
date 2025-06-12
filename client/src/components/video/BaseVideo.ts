@@ -1,13 +1,20 @@
 import UaUtil from '@/util/UaUtil';
 import { Component, Vue } from 'vue-property-decorator';
+import CommentOverlay from '../overlay/CommentOverlay.vue';
+import * as proto from '@/gen/proto';
+type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 
 export default abstract class BaseVide extends Vue {
     protected video: HTMLVideoElement | null = null;
     protected lastSubtitleState: TextTrackMode = 'disabled';
+    protected lastCommentState: boolean = false;
+    protected commentOverlay: CommentOverlay | null = null;
+    protected recieveLiveCommentCallback!: (msg: NicoJKChunkedMessage) => void;
 
     public mounted(): void {
         this.video = this.$refs.video as HTMLVideoElement;
-
+        this.commentOverlay = (this.$refs.comment as CommentOverlay) ?? null;
+        this.recieveLiveCommentCallback = this._recieveLiveCommentCallback.bind(this);
         // 時刻更新
         this.video.addEventListener('timeupdate', this.onTimeupdate.bind(this));
 
@@ -302,6 +309,71 @@ export default abstract class BaseVide extends Vue {
             }
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    /**
+     * コメントが有効か
+     * @return boolean true で有効
+     */
+    public isEnableComment(): boolean {
+        return this.commentOverlay !== null;
+    }
+
+    /**
+     * コメントが表示されているか
+     * @return boolean true で表示されている
+     */
+    public isShowingComment(): boolean {
+        return this.commentOverlay !== null && this.commentOverlay.isShow();
+    }
+
+    /**
+     * コメントを表示させる
+     */
+    public showComment(): void {
+        if (this.commentOverlay == null) return;
+        this.commentOverlay.enable(true);
+        this.lastCommentState = this.commentOverlay.isShow();
+    }
+
+    //コメントを追加する
+    public addComment(text: string): void {
+        if (this.commentOverlay == null) return;
+        this.commentOverlay.addComment(text);
+    }
+
+    private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
+        if (this.commentOverlay === null) return;
+
+        if (msg.message?.chat?.content) {
+            this.commentOverlay.addComment(msg.message.chat.content);
+        }
+    }
+
+    /**
+     * コメントを非表示にする
+     */
+    public disabledComment(): void {
+        if (this.commentOverlay == null) return;
+        this.commentOverlay.enable(false);
+        this.lastCommentState = this.commentOverlay.isShow();
+    }
+
+    /**
+     * ユーザが最後に指定した字幕の表示状態と実際の状態がずれている場合に修正する
+     */
+    public fixCommentState(): void {
+        if (this.video === null || this.commentOverlay == null) {
+            return;
+        }
+
+        if (this.commentOverlay.isShow() !== this.lastCommentState) {
+            if (this.lastCommentState) {
+                this.showComment();
+            } else {
+                this.disabledComment();
+            }
         }
     }
 

@@ -88,6 +88,16 @@
                                     </div>
                                     <v-spacer></v-spacer>
                                     <v-btn
+                                        v-if="isEnableComment === true"
+                                        icon
+                                        dark
+                                        class="comment-icon"
+                                        v-bind:class="{ disabled: isShowingComment === false }"
+                                        v-on:click="switchComment"
+                                    >
+                                        <v-icon>mdi-comment</v-icon>
+                                    </v-btn>
+                                    <v-btn
                                         v-if="isEnabledSubtitles === true"
                                         icon
                                         dark
@@ -177,6 +187,7 @@
                     v-if="videoParam.type == 'LiveMpegTs'"
                     ref="video"
                     v-bind:videoSrc.sync="videoParam.src"
+                    v-bind:channelId="videoParam.channelId"
                     v-on:timeupdate="onTimeupdate"
                     v-on:waiting="onWaiting"
                     v-on:loadeddata="onLoadeddata"
@@ -205,6 +216,7 @@ import UaUtil from '@/util/UaUtil';
 import Util from '@/util/Util';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { IVideoPlayerSettingModel } from '@/model/storage/video/IVideoPlayerSettingModel';
+import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
 
 interface SpeedItem {
     text: string;
@@ -218,6 +230,7 @@ interface SpeedItem {
         RecordedStreamingVideo,
         RecordedHLSStreamingVideo,
         LiveMpegTsVideo,
+        CommentOverlay,
     },
 })
 export default class VideoContainer extends Vue {
@@ -241,6 +254,10 @@ export default class VideoContainer extends Vue {
     public currentTimeStr: string = '--:--';
     public durationStr: string = '--:--';
     public playbackRate: number = 1.0;
+
+    //コメント表示
+    public isEnableComment: boolean = false;
+    public isShowingComment: boolean = false;
 
     // 字幕状態 (表示用)
     public isEnabledSubtitles: boolean = false;
@@ -267,6 +284,7 @@ export default class VideoContainer extends Vue {
     // 内部字幕状態
     // eslint-disable-next-line no-undef
     private internalSubtitleState: TextTrackMode = 'disabled';
+    private internalCommentState: boolean = false;
 
     public created(): void {
         document.addEventListener('keydown', this.keyDwonListener, false);
@@ -400,6 +418,7 @@ export default class VideoContainer extends Vue {
         this.currentTime = this.getVideoCurrentTime();
         this.updateTimeStr();
         this.updateSubtitleState();
+        this.updateCommentState();
     }
 
     /**
@@ -461,6 +480,14 @@ export default class VideoContainer extends Vue {
         this.isShowingSubtitle = typeof this.$refs.video !== 'undefined' && (this.$refs.video as BaseVideo).isShowingSubtitle();
     }
 
+    protected updateCommentState(): void {
+        if (typeof this.$refs.video !== 'undefined') {
+            (this.$refs.video as BaseVideo).fixCommentState();
+        }
+        this.isEnableComment = typeof this.$refs.video !== 'undefined' && (this.$refs.video as BaseVideo).isEnableComment();
+        this.isShowingComment = typeof this.$refs.video !== 'undefined' && (this.$refs.video as BaseVideo).isShowingComment();
+    }
+
     // 読み込み中
     public onWaiting(): void {
         this.isLoading = true;
@@ -471,6 +498,8 @@ export default class VideoContainer extends Vue {
         this.isLoading = false;
         this.forceUpdateSubtitle();
         this.updateSubtitleState();
+        this.forceUpdateComment();
+        this.updateCommentState();
     }
 
     // 再生可能
@@ -494,6 +523,14 @@ export default class VideoContainer extends Vue {
                     this.internalSubtitleState = subtitleConfig === true ? 'showing' : 'disabled';
                     this.forceUpdateSubtitle();
                 }
+
+                //コメントも
+                const isShowingComment = this.internalCommentState;
+                const commentConfig = this.videoSetting.getSavedValue().isShowComment;
+                if (commentConfig !== isShowingComment) {
+                    this.internalCommentState = commentConfig;
+                    this.forceUpdateComment();
+                }
             }
             this.isFirstPlay = false;
         }, 300);
@@ -505,6 +542,7 @@ export default class VideoContainer extends Vue {
         this.updateTimeStr();
 
         this.updateSubtitleState();
+        this.updateCommentState();
     }
 
     // 終了
@@ -516,6 +554,7 @@ export default class VideoContainer extends Vue {
     public onPlay(): void {
         this.isPause = false;
         this.updateSubtitleState();
+        this.updateCommentState();
     }
 
     // 停止
@@ -548,6 +587,7 @@ export default class VideoContainer extends Vue {
 
         // 内部の字幕表示状態と実際の状態を強制的に合わせる
         this.forceUpdateSubtitle();
+        this.forceUpdateComment();
 
         // シーク前に再生中であれば再開
         await Util.sleep(200);
@@ -572,6 +612,22 @@ export default class VideoContainer extends Vue {
                 (this.$refs.video as BaseVideo).showSubtitle();
             } else {
                 (this.$refs.video as BaseVideo).disabledSubtitle();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    private forceUpdateComment(): void {
+        if (typeof this.$refs.video === 'undefined') {
+            return;
+        }
+
+        try {
+            if (this.internalCommentState) {
+                (this.$refs.video as BaseVideo).showComment();
+            } else {
+                (this.$refs.video as BaseVideo).disabledComment();
             }
         } catch (err) {
             console.error(err);
@@ -775,6 +831,28 @@ export default class VideoContainer extends Vue {
         this.updateSubtitleState();
     }
 
+    //コメント切り替え
+    public switchComment(): void {
+        if (typeof this.$refs.video === 'undefined') {
+            return;
+        }
+
+        if ((this.$refs.video as BaseVideo).isShowingComment() === true) {
+            // 非表示
+            this.internalCommentState = false;
+            (this.$refs.video as BaseVideo).disabledComment();
+        } else {
+            // 表示
+            this.internalCommentState = true;
+            (this.$refs.video as BaseVideo).showComment();
+        }
+
+        this.videoSetting.tmp.isShowComment = this.internalCommentState;
+        this.videoSetting.save();
+
+        this.updateCommentState();
+    }
+
     // fullscreen 切り替え
     public async switchFullScreen(): Promise<void> {
         if (typeof this.$refs.container === 'undefined') {
@@ -970,6 +1048,8 @@ export default class VideoContainer extends Vue {
 
                 .subtitle-icon.disabled
                     opacity: 0.3
+                .comment-icon.disabled
+                    opacity: 0.3
 
         @media screen and (max-width: 420px)
             .left-buttons
@@ -993,12 +1073,10 @@ export default class VideoContainer extends Vue {
         width: 100%
         height: 100%
 
-        video
+        .video-element
+            position: absolute
             width: 100%
             height: 100%
-            &::cue
-                color: white
-                background-color: rgba(0, 0, 0, 0.6)
 
     .video-content
         &.is-ipad
@@ -1031,6 +1109,15 @@ export default class VideoContainer extends Vue {
             margin: 0
         .v-messages
             display: none
+    .video-wrap
+        .video-element
+            video
+                position: relative
+                width: 100%
+                height: 100%
+                &::cue
+                    color: white
+                    background-color: rgba(0, 0, 0, 0.6)
 
 .video-menu
     .v-text-field__details

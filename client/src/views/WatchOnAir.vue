@@ -3,11 +3,7 @@
         <TitleBar title="視聴"></TitleBar>
         <transition name="page">
             <div class="video-container-wrap mx-auto">
-                <div class="video-size-wrap mx-auto">
-                    <VideoContainer v-if="videoParam !== null" v-bind:videoParam="videoParam"></VideoContainer>
-                    <CommentOverlay v-if="showComments" ref="overlay"></CommentOverlay>
-                </div>
-                <v-switch v-model="showComments" label="ニコニコ実況を表示" class="mt-4" inset></v-switch>
+                <VideoContainer v-if="videoParam !== null" v-bind:videoParam="videoParam"></VideoContainer>
                 <WatchOnAirInfoCard v-if="watchParam !== null" v-bind:channel="watchParam.channel" v-bind:mode="watchParam.mode"></WatchOnAirInfoCard>
                 <div style="visibility: hidden">dummy</div>
             </div>
@@ -26,7 +22,6 @@ import ISnackbarState from '@/model/state/snackbar/ISnackbarState';
 import Util from '@/util/Util';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import * as apid from '../../../api';
-import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
 import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 import * as proto from '@/gen/proto';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
@@ -49,7 +44,6 @@ interface CommentItem {
         TitleBar,
         VideoContainer,
         WatchOnAirInfoCard,
-        CommentOverlay,
     },
 })
 export default class WatchOnAir extends Vue {
@@ -59,11 +53,6 @@ export default class WatchOnAir extends Vue {
     private snackbarState: ISnackbarState = container.get<ISnackbarState>('ISnackbarState');
 
     private watchParam: WatchParam | null = null;
-    //コメントトグル
-    public showComments: boolean = false;
-    private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
-    private commentOverlay: CommentOverlay | null = null;
-    private recieveCallback: (msg: NicoJKChunkedMessage) => void = this.onReciveComment.bind(this);
 
     @Watch('$route', { immediate: true, deep: true })
     public onUrlChange(): void {
@@ -88,6 +77,7 @@ export default class WatchOnAir extends Vue {
                 } else if (this.watchParam.type === 'm2tsll') {
                     (this.videoParam as LiveMpegTsVideoParam) = {
                         type: 'LiveMpegTs',
+                        channelId: this.watchParam.channel,
                         src: `${window.location.origin}${Util.getSubDirectory()}/api/streams/live/${this.watchParam.channel}/m2tsll?mode=${this.watchParam.mode}`,
                     };
                 } else {
@@ -102,44 +92,10 @@ export default class WatchOnAir extends Vue {
             await this.scrollState.emitDoneGetData();
         });
     }
-
-    @Watch('showComments')
-    onToggleComments(val: boolean): void {
-        const chnum = this.watchParam?.channel;
-        if (chnum == undefined) {
-            console.log('miss channel number');
-            return;
-        }
-        console.log('channel number: ', chnum);
-
-        if (this.showComments) {
-            this.socketIoModel.startNicoliveCommentServer(chnum.toString());
-        } else {
-            this.socketIoModel.closeNicoliveCommentServer(chnum.toString());
-        }
-    }
-
-    public mounted(): void {
-        this.socketIoModel.onRecieveNicoLiveMessage(this.recieveCallback);
-    }
-    public beforeDestroy() {
-        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveCallback);
-    }
-
-    private onReciveComment(msg: NicoJKChunkedMessage) {
-        if (msg.message?.chat?.content) {
-            // console.log(msg.message.chat.content);
-            // console.log(msg.message.chat.vpos);
-            this.commentOverlay = this.$refs.overlay as CommentOverlay;
-            this.commentOverlay?.addComment(msg.message.chat.content);
-        }
-    }
 }
 </script>
 
 <style lang="sass" scoped>
 .video-container-wrap
     max-width: 1200px
-.video-size-wrap
-    position: relative
 </style>

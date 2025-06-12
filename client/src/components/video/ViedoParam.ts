@@ -36,4 +36,5 @@ export interface RecordedHLSParam extends BaseVideoParam {
 export interface LiveMpegTsVideoParam extends BaseVideoParam {
     type: 'LiveMpegTs';
     src: string;
+    channelId: apid.ChannelId;
 }

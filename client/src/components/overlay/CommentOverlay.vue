@@ -100,8 +100,6 @@ export default class CommentOverlay extends Vue {
             }
         });
         this.resizeObserver.observe(parent);
-        this.lastTime = performance.now();
-        requestAnimationFrame(this.update.bind(this));
     }
 
     private resizeFontFromCanvasSize(width: number, height: number) {
@@ -111,9 +109,22 @@ export default class CommentOverlay extends Vue {
         this.ctx.lineWidth = fontsize / 15;
     }
 
-    beforeUnmount() {
-        cancelAnimationFrame(this.animationId);
+    enable(flg: boolean): void {
+        if (flg) {
+            this.lastTime = performance.now();
+            this.update(performance.now());
+        } else {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = 0;
+            if (!this.canvasEl) return;
+            this.ctx?.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+        }
     }
+    isShow(): boolean {
+        return this.animationId != 0;
+    }
+
+    beforeUnmount() {}
 
     beforeDestroy() {
         if (this.resizeObserver) {
@@ -148,6 +159,7 @@ export default class CommentOverlay extends Vue {
     }
     update(currentTime: number) {
         if (!this.ctx || !this.canvasEl) return;
+
         const delta = currentTime - this.lastTime;
         this.lastTime = currentTime;
 
@@ -161,7 +173,7 @@ export default class CommentOverlay extends Vue {
                 break;
             }
             const comment = result.value;
-            // console.log(comment);
+
             //画面外
             if (comment.x + this.ctx.measureText(comment.text).width < 0) {
                 //処理数を減らすために消せるようなら消す

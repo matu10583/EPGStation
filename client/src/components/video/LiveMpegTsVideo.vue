@@ -1,5 +1,8 @@
 <template>
-    <video ref="video" autoplay playsinline></video>
+    <div class="video-element">
+        <CommentOverlay ref="comment"></CommentOverlay>
+        <video ref="video" autoplay playsinline></video>
+    </div>
 </template>
 
 <script lang="ts">
@@ -10,19 +13,29 @@ import * as aribb24js from 'aribb24.js';
 import { Component, Prop } from 'vue-property-decorator';
 import Mpegts from 'mpegts.js';
 import HLSUtil from '@/util/HLSUtil';
+import CommentOverlay from '../overlay/CommentOverlay.vue';
+import ISocketIOModel from '@/model/socketio/ISocketIOModel';
+import * as apid from '../../../../api';
 
-@Component({})
+@Component({
+    components: {
+        CommentOverlay,
+    },
+})
 export default class LiveMpegTsVideo extends BaseVideo {
     @Prop({ required: true })
     public videoSrc!: string;
+    @Prop({ required: true })
+    public channelId!: apid.ChannelId;
 
     private snackbarState: ISnackbarState = container.get<ISnackbarState>('ISnackbarState');
     private mepgtsPlayer: Mpegts.Player | null = null;
     private captionRenderer: aribb24js.CanvasRenderer | null = null;
     private superimposeRenderer: aribb24js.CanvasRenderer | null = null;
-
+    private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
     public mounted(): void {
         super.mounted();
+        this.socketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
     }
 
     public async beforeDestroy(): Promise<void> {
@@ -44,7 +57,7 @@ export default class LiveMpegTsVideo extends BaseVideo {
             this.superimposeRenderer.dispose();
             this.superimposeRenderer = null;
         }
-
+        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
         super.beforeDestroy();
     }
 
@@ -197,6 +210,16 @@ export default class LiveMpegTsVideo extends BaseVideo {
         if (this.superimposeRenderer !== null) {
             this.superimposeRenderer.hide();
         }
+    }
+
+    public showComment(): void {
+        this.socketIoModel.startNicoliveCommentServer(this.channelId.toString());
+        super.showComment();
+    }
+
+    public disabledComment(): void {
+        this.socketIoModel.closeNicoliveCommentServer(this.channelId.toString());
+        super.disabledComment();
     }
 }
 </script>

@@ -12,6 +12,7 @@ export default class VideoPlayerSettingModel extends AbstractStorageBaseModel<IV
     public getDefaultValue(): IVideoPlayerSettingValue {
         return {
             isShowSubtitle: false,
+            isShowComment: false,
         };
     }
 
