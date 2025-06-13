@@ -1,8 +1,5 @@
 <template>
-    <div class="video-element">
-        <CommentOverlay ref="comment"></CommentOverlay>
-        <video ref="video" autoplay playsinline></video>
-    </div>
+    <video ref="video" autoplay playsinline></video>
 </template>
 
 <script lang="ts">
@@ -13,15 +10,10 @@ import * as aribb24js from 'aribb24.js';
 import { Component, Prop } from 'vue-property-decorator';
 import Mpegts from 'mpegts.js';
 import HLSUtil from '@/util/HLSUtil';
-import CommentOverlay from '../overlay/CommentOverlay.vue';
 import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 import * as apid from '../../../../api';
 
-@Component({
-    components: {
-        CommentOverlay,
-    },
-})
+@Component({})
 export default class LiveMpegTsVideo extends BaseVideo {
     @Prop({ required: true })
     public videoSrc!: string;
@@ -100,7 +92,7 @@ export default class LiveMpegTsVideo extends BaseVideo {
             mpegtsConfig,
         );
 
-        this.mepgtsPlayer.attachMediaElement(this.video);
+        this.mepgtsPlayer.attachMediaElement(this.getSrcVideo());
         this.mepgtsPlayer.load();
         this.mepgtsPlayer.play();
 
@@ -220,6 +212,10 @@ export default class LiveMpegTsVideo extends BaseVideo {
     public disabledComment(): void {
         this.socketIoModel.closeNicoliveCommentServer(this.channelId.toString());
         super.disabledComment();
+    }
+
+    public isEnableComment(): boolean {
+        return true;
     }
 }
 </script>

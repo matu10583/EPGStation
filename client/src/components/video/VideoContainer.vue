@@ -216,7 +216,6 @@ import UaUtil from '@/util/UaUtil';
 import Util from '@/util/Util';
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { IVideoPlayerSettingModel } from '@/model/storage/video/IVideoPlayerSettingModel';
-import CommentOverlay from '@/components/overlay/CommentOverlay.vue';
 
 interface SpeedItem {
     text: string;
@@ -230,7 +229,6 @@ interface SpeedItem {
         RecordedStreamingVideo,
         RecordedHLSStreamingVideo,
         LiveMpegTsVideo,
-        CommentOverlay,
     },
 })
 export default class VideoContainer extends Vue {
@@ -1073,10 +1071,13 @@ export default class VideoContainer extends Vue {
         width: 100%
         height: 100%
 
-        .video-element
-            position: absolute
+        video
+            position: relative
             width: 100%
             height: 100%
+            &::cue
+                color: white
+                background-color: rgba(0, 0, 0, 0.6)
 
     .video-content
         &.is-ipad
@@ -1109,15 +1110,7 @@ export default class VideoContainer extends Vue {
             margin: 0
         .v-messages
             display: none
-    .video-wrap
-        .video-element
-            video
-                position: relative
-                width: 100%
-                height: 100%
-                &::cue
-                    color: white
-                    background-color: rgba(0, 0, 0, 0.6)
+
 
 .video-menu
     .v-text-field__details

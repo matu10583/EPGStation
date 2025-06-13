@@ -2,47 +2,142 @@ import UaUtil from '@/util/UaUtil';
 import { Component, Vue } from 'vue-property-decorator';
 import CommentOverlay from '../overlay/CommentOverlay.vue';
 import * as proto from '@/gen/proto';
+import CommentRenderer from '@/model/comment/CommentRenderer';
+import container from '@/model/ModelContainer';
+import ICommentRenderer from '@/model/comment/ICommentRenderer';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
+
+interface CommentRenderState{
+    enable: boolean,
+    renderer: ICommentRenderer,
+};
 
 export default abstract class BaseVide extends Vue {
     protected video: HTMLVideoElement | null = null;
+    private srcVideo!: HTMLVideoElement;
     protected lastSubtitleState: TextTrackMode = 'disabled';
     protected lastCommentState: boolean = false;
-    protected commentOverlay: CommentOverlay | null = null;
+
     protected recieveLiveCommentCallback!: (msg: NicoJKChunkedMessage) => void;
+    private renderCanvas!: HTMLCanvasElement;
+    private renderContext!: CanvasRenderingContext2D | null;
+    private commentRendererState:CommentRenderState ={
+        enable:false,
+        renderer : container.get<ICommentRenderer>('ICommentRenderer')
+    };
+    private framePerSeconds: number = 30;
+    private lastTime: number = 0;
+    private updateFrameId: number = 0;
+
+    protected getSrcVideo() {
+        return this.srcVideo;
+    }
 
     public mounted(): void {
         this.video = this.$refs.video as HTMLVideoElement;
-        this.commentOverlay = (this.$refs.comment as CommentOverlay) ?? null;
+        this.renderCanvas = document.createElement('canvas');
+        this.renderContext = this.renderCanvas.getContext('2d') ?? null;
+        this.srcVideo = document.createElement('video');
+        this.srcVideo.autoplay = true;
+
         this.recieveLiveCommentCallback = this._recieveLiveCommentCallback.bind(this);
         // 時刻更新
-        this.video.addEventListener('timeupdate', this.onTimeupdate.bind(this));
+        this.srcVideo.addEventListener('timeupdate', this.onTimeupdate.bind(this));
 
         // 読み込み中
-        this.video.addEventListener('waiting', this.onWaiting.bind(this));
+        this.srcVideo.addEventListener('waiting', this.onWaiting.bind(this));
 
         // 読み込み完了
-        this.video.addEventListener('loadeddata', this.onLoadeddata.bind(this));
+        this.srcVideo.addEventListener('loadeddata', this.onLoadeddata.bind(this));
 
         // 再生可能
-        this.video.addEventListener('canplay', this.onCanplay.bind(this));
+        this.srcVideo.addEventListener('canplay', this.onCanplay.bind(this));
+
+        //ソースが再生可能になったら更新開始。更新すればvideo側にもストリームがたまるはず
+        this.srcVideo.addEventListener(
+            'canplay',
+            () => {
+                this.updateCanvas(0);
+                this.initCaptureCanvas();
+                this.updateFrameId = requestAnimationFrame(this.render.bind(this));
+            },
+            { once: true },
+        );
 
         // 終了
-        this.video.addEventListener('ended', this.onEnded.bind(this));
+        this.srcVideo.addEventListener('ended', this.onEnded.bind(this));
 
         // 再生
-        this.video.addEventListener('play', this.onPlay.bind(this));
+        this.srcVideo.addEventListener('play', this.onPlay.bind(this));
 
         // 停止
-        this.video.addEventListener('pause', this.onPause.bind(this));
+        this.srcVideo.addEventListener('pause', this.onPause.bind(this));
 
         // 再生速度変化
-        this.video.addEventListener('ratechange', this.onRatechange.bind(this));
+        this.srcVideo.addEventListener('ratechange', this.onRatechange.bind(this));
 
         // 音量変化
-        this.video.addEventListener('volumechange', this.onVolumechange.bind(this));
+        this.srcVideo.addEventListener('volumechange', this.onVolumechange.bind(this));
 
         this.initVideoSetting();
+    }
+
+    private initCaptureCanvas() {
+        if (this.video === null) return;
+        const canvasStream = this.renderCanvas.captureStream(this.framePerSeconds);
+        // const videoStream = (this.srcVideo as any).captureStream();
+
+        // for (const track of videoStream.getAudioTracks()) {
+        //     canvasStream.addTrack(track);
+        // }
+
+        this.video.srcObject = canvasStream;
+    }
+
+    private render(timestamp: number) {
+        if (this.video === null) return;
+        this.updateCanvas(timestamp);
+        this.updateFrameId = requestAnimationFrame(ts => {
+            this.render(ts);
+        });
+    }
+
+    private updateCanvas(ts: number) {
+        if (this.lastTime === 0) this.lastTime = ts;
+        if (this.renderContext === null) return;
+        
+        const delta = ts - this.lastTime;
+
+        this.renderCanvas.width = this.srcVideo.videoWidth;
+        this.renderCanvas.height = this.srcVideo.videoHeight;
+        this.commentRendererState.renderer.setRect(
+            this.renderCanvas.width, this.renderCanvas.height
+        );
+
+        // if(this.srcVideo.readyState<HTMLMediaElement.HAVE_FUTURE_DATA){
+        //     //コメントだけだしとく
+        //     if(this.commentRendererState.enable){
+        //         this.commentRendererState.renderer.render(
+        //             0, this.renderContext
+        //         );
+        //     }
+        //     return;
+        // }
+
+
+ 
+        this.renderContext.clearRect(0, 0, this.renderCanvas.width, this.renderCanvas.height);
+
+        //動画の描画
+        this.renderContext.drawImage(this.srcVideo, 0, 0, this.renderCanvas.width, this.renderCanvas.height);
+
+        //コメントの描画
+        if(this.commentRendererState.enable){
+            this.commentRendererState.renderer.render(
+                delta, this.renderContext
+            );
+        }
+        this.lastTime = ts;
     }
 
     /**
@@ -54,11 +149,11 @@ export default abstract class BaseVide extends Vue {
      * video ソース設定
      */
     protected setSrc(src: string): void {
-        if (this.video === null) {
+        if (this.video == null) {
             return;
         }
 
-        this.video.src = src;
+        this.srcVideo.src = src;
     }
 
     /**
@@ -69,6 +164,7 @@ export default abstract class BaseVide extends Vue {
             return;
         }
 
+        this.srcVideo.load();
         this.video.load();
     }
 
@@ -81,8 +177,11 @@ export default abstract class BaseVide extends Vue {
         }
 
         this.video.pause();
-        this.video.removeAttribute('src');
+        this.video.removeAttribute('srcObject');
         this.video.load();
+        this.srcVideo.pause();
+        this.srcVideo.removeAttribute('src');
+        this.srcVideo.load();
     }
 
     /**
@@ -96,6 +195,8 @@ export default abstract class BaseVide extends Vue {
      * 読み込み中
      */
     protected onWaiting(): void {
+        console.log('waiting');
+
         this.$emit('waiting');
     }
 
@@ -103,6 +204,8 @@ export default abstract class BaseVide extends Vue {
      * 読み込み完了
      */
     protected onLoadeddata(): void {
+        console.log('loaded');
+
         this.$emit('loadeddata');
     }
 
@@ -110,6 +213,8 @@ export default abstract class BaseVide extends Vue {
      * 再生可能
      */
     protected onCanplay(): void {
+        console.log('play can');
+
         this.$emit('canplay');
     }
 
@@ -124,6 +229,7 @@ export default abstract class BaseVide extends Vue {
      * 再生
      */
     protected onPlay(): void {
+        this.video?.play();
         this.$emit('play');
     }
 
@@ -131,6 +237,7 @@ export default abstract class BaseVide extends Vue {
      * 停止
      */
     protected onPause(): void {
+        this.video?.pause();
         this.$emit('pause');
     }
 
@@ -149,6 +256,7 @@ export default abstract class BaseVide extends Vue {
     }
 
     public beforeDestroy(): void {
+        cancelAnimationFrame(this.updateFrameId);
         this.unload();
     }
 
@@ -159,8 +267,7 @@ export default abstract class BaseVide extends Vue {
         if (this.video === null) {
             return;
         }
-
-        await this.video.play();
+        await this.srcVideo.play();
     }
 
     /**
@@ -170,22 +277,21 @@ export default abstract class BaseVide extends Vue {
         if (this.video === null) {
             return;
         }
-
-        this.video.pause();
+        this.srcVideo.pause();
     }
 
     /**
      * 停止中か
      */
     public paused(): boolean {
-        return this.video === null ? true : this.video.paused;
+        return this.video === null ? true : this.srcVideo.paused;
     }
 
     /**
      * 再生速度を返す
      */
     public getPlaybackRate(): number {
-        return this.video === null ? 1.0 : this.video.playbackRate;
+        return this.video === null ? 1.0 : this.srcVideo.playbackRate;
     }
 
     /**
@@ -196,7 +302,7 @@ export default abstract class BaseVide extends Vue {
             return;
         }
 
-        this.video.playbackRate = rate;
+        this.srcVideo.playbackRate = rate;
     }
 
     /**
@@ -204,7 +310,7 @@ export default abstract class BaseVide extends Vue {
      * @return number
      */
     public getDuration(): number {
-        return this.video === null || this.video.duration === Infinity || isNaN(this.video.duration) ? 0 : this.video.duration;
+        return this.video === null || this.srcVideo.duration === Infinity || isNaN(this.srcVideo.duration) ? 0 : this.srcVideo.duration;
     }
 
     /**
@@ -212,7 +318,7 @@ export default abstract class BaseVide extends Vue {
      * @return number
      */
     public getCurrentTime(): number {
-        return this.video === null || this.video.currentTime === Infinity || isNaN(this.video.currentTime) ? 0 : this.video.currentTime;
+        return this.video === null || this.srcVideo.currentTime === Infinity || isNaN(this.video.currentTime) ? 0 : this.srcVideo.currentTime;
     }
 
     /**
@@ -224,7 +330,7 @@ export default abstract class BaseVide extends Vue {
             return;
         }
 
-        this.video.currentTime = time;
+        this.srcVideo.currentTime = time;
 
         this.fixSubtitleState();
     }
@@ -234,7 +340,7 @@ export default abstract class BaseVide extends Vue {
      * @return number
      */
     public getVolume(): number {
-        return this.video === null || this.video.muted ? 0 : this.video.volume;
+        return this.video === null || this.srcVideo.muted ? 0 : this.srcVideo.volume;
     }
 
     /**
@@ -245,7 +351,7 @@ export default abstract class BaseVide extends Vue {
             return;
         }
 
-        this.video.muted = !this.video.muted;
+        this.srcVideo.muted = !this.srcVideo.muted;
     }
 
     /**
@@ -257,7 +363,7 @@ export default abstract class BaseVide extends Vue {
             return;
         }
 
-        this.video.volume = volume;
+        this.srcVideo.volume = volume;
     }
 
     /**
@@ -317,7 +423,8 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で有効
      */
     public isEnableComment(): boolean {
-        return this.commentOverlay !== null;
+        return false;
+        // return this.commentOverlay !== null;
     }
 
     /**
@@ -325,29 +432,26 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で表示されている
      */
     public isShowingComment(): boolean {
-        return this.commentOverlay !== null && this.commentOverlay.isShow();
+        return this.commentRendererState.enable;
     }
 
     /**
      * コメントを表示させる
      */
     public showComment(): void {
-        if (this.commentOverlay == null) return;
-        this.commentOverlay.enable(true);
-        this.lastCommentState = this.commentOverlay.isShow();
+        this.commentRendererState.enable=true;
+        this.lastCommentState = this.commentRendererState.enable;
     }
 
     //コメントを追加する
-    public addComment(text: string): void {
-        if (this.commentOverlay == null) return;
-        this.commentOverlay.addComment(text);
-    }
+    // public addComment(text: string): void {
+    //     if (this.commentOverlay == null) return;
+    //     this.commentOverlay.addComment(text);
+    // }
 
     private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
-        if (this.commentOverlay === null) return;
-
         if (msg.message?.chat?.content) {
-            this.commentOverlay.addComment(msg.message.chat.content);
+            this.commentRendererState.renderer.addComment(msg.message.chat.content);
         }
     }
 
@@ -355,20 +459,15 @@ export default abstract class BaseVide extends Vue {
      * コメントを非表示にする
      */
     public disabledComment(): void {
-        if (this.commentOverlay == null) return;
-        this.commentOverlay.enable(false);
-        this.lastCommentState = this.commentOverlay.isShow();
+        this.commentRendererState.enable = false;
+        this.lastCommentState = this.commentRendererState.enable;
     }
 
     /**
      * ユーザが最後に指定した字幕の表示状態と実際の状態がずれている場合に修正する
      */
     public fixCommentState(): void {
-        if (this.video === null || this.commentOverlay == null) {
-            return;
-        }
-
-        if (this.commentOverlay.isShow() !== this.lastCommentState) {
+        if (this.commentRendererState.enable !== this.lastCommentState) {
             if (this.lastCommentState) {
                 this.showComment();
             } else {
@@ -382,7 +481,7 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で有効
      */
     public isEnabledSubtitles(): boolean {
-        return this.video !== null && this.video.textTracks.length > 0;
+        return this.video !== null && this.srcVideo.textTracks.length > 0;
     }
 
     /**
@@ -390,42 +489,44 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で表示されている
      */
     public isShowingSubtitle(): boolean {
-        return this.video !== null && this.video.textTracks.length > 0 && this.video.textTracks[0].mode === 'showing';
+        return this.video !== null && this.srcVideo.textTracks.length > 0 && this.srcVideo.textTracks[0].mode === 'showing';
     }
 
     /**
      * 字幕を表示させる
      */
     public showSubtitle(): void {
-        if (this.video === null || this.video.textTracks.length === 0) {
+        if (this.video === null || this.srcVideo.textTracks.length === 0) {
             return;
         }
-
-        this.video.textTracks[0].mode = 'showing';
-        this.lastSubtitleState = this.video.textTracks[0].mode;
+        console.log("show subtitle");
+        
+        
+        this.srcVideo.textTracks[0].mode = 'showing';
+        this.lastSubtitleState = this.srcVideo.textTracks[0].mode;
     }
 
     /**
      * 字幕を非表示にする
      */
     public disabledSubtitle(): void {
-        if (this.video === null || this.video.textTracks.length === 0) {
+        if (this.video === null || this.srcVideo.textTracks.length === 0) {
             return;
         }
 
-        this.video.textTracks[0].mode = 'disabled';
-        this.lastSubtitleState = this.video.textTracks[0].mode;
+        this.srcVideo.textTracks[0].mode = 'disabled';
+        this.lastSubtitleState = this.srcVideo.textTracks[0].mode;
     }
 
     /**
      * ユーザが最後に指定した字幕の表示状態と実際の状態がずれている場合に修正する
      */
     public fixSubtitleState(): void {
-        if (this.video === null || this.video.textTracks.length === 0) {
+        if (this.video === null || this.srcVideo.textTracks.length === 0) {
             return;
         }
 
-        if (this.video.textTracks[0].mode !== this.lastSubtitleState) {
+        if (this.srcVideo.textTracks[0].mode !== this.lastSubtitleState) {
             if (this.lastSubtitleState === 'showing') {
                 this.showSubtitle();
             } else {

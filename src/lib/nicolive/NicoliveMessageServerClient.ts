@@ -12,17 +12,28 @@ export default class NicoliveMessageServerClient implements INicoliveMessageServ
     private baseurl: string | null = null;
     private nextStreamAt: string = 'now';
     public onRecieveSegment: ((seg: MessageSegment) => any) | null = null;
+    private loopPromise: Promise<void>|null = null;
     constructor() {}
 
     public setBaseUrl(url: string) {
-        this.abortController.abort();
         this.baseurl = url;
+    }
+
+    public async waitDisconnect():Promise<void>{
+        this.disconnect();
+        if(this.loopPromise===null) return;
+        await this.loopPromise;
     }
 
     public disconnect(){
         this.abortController.abort();
+
     }
     public async runConnect() {
+        this.loopPromise = this.loopcontent();
+    }
+
+    private async loopcontent(): Promise<void>{
         this.abortController = new AbortController();
         while (!this.abortController.signal.aborted) {
             try {

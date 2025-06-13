@@ -100,6 +100,7 @@ class SocketIOModel implements ISocketIOModel {
             console.log('it has registered.');
             return;
         }
+        
         const wrapped = (msg: ArrayBuffer) => callback(NicoJKMessageScheme.decode(new Uint8Array(msg)));
         this.onRecieveNicoliveWrappedMap.set(callback, wrapped);
         this.io.on(SocketIOModel.RECIEVE_NICOLIVE_MESSAGE, wrapped);
@@ -113,6 +114,7 @@ class SocketIOModel implements ISocketIOModel {
         if (this.io === null) {
             throw new Error('IOIsNull');
         }
+        console.log("unregistered");
         const wrapped = this.onRecieveNicoliveWrappedMap.get(callback);
         if (wrapped === undefined) return;
         this.io.off(SocketIOModel.RECIEVE_NICOLIVE_MESSAGE, wrapped);

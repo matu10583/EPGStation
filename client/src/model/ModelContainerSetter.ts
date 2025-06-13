@@ -125,6 +125,8 @@ import VersionState from '@/model/state/version/VersionState';
 import IVersionState from '@/model/state/version/IVersionState';
 import VersionApiModel from '@/model/api/version/VersionApiModel';
 import IVersionApiModel from '@/model/api/version/IVersionApiModel';
+import ICommentRenderer from './comment/ICommentRenderer';
+import CommentRenderer from './comment/CommentRenderer';
 
 /**
  * container に各 Model を登録する
@@ -255,4 +257,6 @@ export default (container: Container): void => {
     container.bind<IVersionState>('IVersionState').to(VersionState).inSingletonScope();
 
     container.bind<IColorThemeState>('IColorThemeState').to(ColorThemeState).inSingletonScope();
+
+    container.bind<ICommentRenderer>('ICommentRenderer').to(CommentRenderer).inSingletonScope();
 };

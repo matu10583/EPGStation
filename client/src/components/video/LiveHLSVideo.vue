@@ -1,8 +1,5 @@
 <template>
-    <div>
-        <CommentOverlay ref="comment"></CommentOverlay>
-        <video ref="video" autoplay playsinline></video>
-    </div>
+    <video ref="video" autoplay playsinline></video>
 </template>
 
 <script lang="ts">
@@ -15,14 +12,9 @@ import HLSUtil from '@/util/HLSUtil';
 import Hls from 'hls.js';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import * as apid from '../../../../api';
-import CommentOverlay from '../overlay/CommentOverlay.vue';
 import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 
-@Component({
-    components: {
-        CommentOverlay,
-    },
-})
+@Component({})
 export default class LiveHLSVideo extends BaseVideo {
     @Prop({ required: true })
     public channelId!: apid.ChannelId;
@@ -100,10 +92,10 @@ export default class LiveHLSVideo extends BaseVideo {
             // hls.js 対応
             this.hls = new Hls();
             this.hls.loadSource(videoSrc);
-            this.hls.attachMedia(this.video);
+            this.hls.attachMedia(this.getSrcVideo());
             this.hls.on(Hls.Events.MANIFEST_PARSED, async () => {
                 if (this.video !== null) {
-                    await this.video.play().catch(err => {});
+                    await this.play().catch(err => {});
                 }
             });
             this.b24RenderState.init(this.video, this.hls);

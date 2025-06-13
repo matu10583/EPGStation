@@ -1,7 +1,5 @@
 <template>
-    <div class="video-element">
-        <video ref="video" playsinline></video>
-    </div>
+    <video ref="video" playsinline></video>
 </template>
 
 <script lang="ts">

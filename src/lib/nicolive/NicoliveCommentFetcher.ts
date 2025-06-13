@@ -51,8 +51,9 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         return true;
     }
 
-    private onRecieveMessageServer(msg: MessageServer) {
+    private async onRecieveMessageServer(msg: MessageServer) {
         this.msg_client.setBaseUrl(msg.data.viewUri);
+        await this.msg_client.waitDisconnect();
         this.msg_client.onRecieveSegment =(msg)=> this.onSegmentMessage(msg);
         this.msg_client.runConnect();
     }

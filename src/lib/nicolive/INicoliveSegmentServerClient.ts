@@ -5,7 +5,7 @@ export type NicoliveSegmentServerClientFactory = (msg: MessageSegment) => INicol
 
 export default interface INicoliveSegmentServerClient {
     onRecieveComment: ((msg: ChunkedMessage) => any) | null;
-
+    getBaseUrl():string;
     connected(): boolean;
     runConnect(): void;
     disconnect():void;
