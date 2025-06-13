@@ -7,10 +7,10 @@ import container from '@/model/ModelContainer';
 import ICommentRenderer from '@/model/comment/ICommentRenderer';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 
-interface CommentRenderState{
-    enable: boolean,
-    renderer: ICommentRenderer,
-};
+interface CommentRenderState {
+    enable: boolean;
+    renderer: ICommentRenderer;
+}
 
 export default abstract class BaseVide extends Vue {
     protected video: HTMLVideoElement | null = null;
@@ -21,9 +21,9 @@ export default abstract class BaseVide extends Vue {
     protected recieveLiveCommentCallback!: (msg: NicoJKChunkedMessage) => void;
     private renderCanvas!: HTMLCanvasElement;
     private renderContext!: CanvasRenderingContext2D | null;
-    private commentRendererState:CommentRenderState ={
-        enable:false,
-        renderer : container.get<ICommentRenderer>('ICommentRenderer')
+    private commentRendererState: CommentRenderState = {
+        enable: false,
+        renderer: container.get<ICommentRenderer>('ICommentRenderer'),
     };
     private framePerSeconds: number = 30;
     private lastTime: number = 0;
@@ -105,14 +105,12 @@ export default abstract class BaseVide extends Vue {
     private updateCanvas(ts: number) {
         if (this.lastTime === 0) this.lastTime = ts;
         if (this.renderContext === null) return;
-        
+
         const delta = ts - this.lastTime;
 
         this.renderCanvas.width = this.srcVideo.videoWidth;
         this.renderCanvas.height = this.srcVideo.videoHeight;
-        this.commentRendererState.renderer.setRect(
-            this.renderCanvas.width, this.renderCanvas.height
-        );
+        this.commentRendererState.renderer.setRect(this.renderCanvas.width, this.renderCanvas.height);
 
         // if(this.srcVideo.readyState<HTMLMediaElement.HAVE_FUTURE_DATA){
         //     //コメントだけだしとく
@@ -124,18 +122,14 @@ export default abstract class BaseVide extends Vue {
         //     return;
         // }
 
-
- 
         this.renderContext.clearRect(0, 0, this.renderCanvas.width, this.renderCanvas.height);
 
         //動画の描画
         this.renderContext.drawImage(this.srcVideo, 0, 0, this.renderCanvas.width, this.renderCanvas.height);
 
         //コメントの描画
-        if(this.commentRendererState.enable){
-            this.commentRendererState.renderer.render(
-                delta, this.renderContext
-            );
+        if (this.commentRendererState.enable) {
+            this.commentRendererState.renderer.render(delta, this.renderContext);
         }
         this.lastTime = ts;
     }
@@ -439,7 +433,7 @@ export default abstract class BaseVide extends Vue {
      * コメントを表示させる
      */
     public showComment(): void {
-        this.commentRendererState.enable=true;
+        this.commentRendererState.enable = true;
         this.lastCommentState = this.commentRendererState.enable;
     }
 
@@ -481,7 +475,7 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で有効
      */
     public isEnabledSubtitles(): boolean {
-        return this.video !== null && this.srcVideo.textTracks.length > 0;
+        return this.video !== null && this.video.textTracks.length > 0;
     }
 
     /**
@@ -489,44 +483,43 @@ export default abstract class BaseVide extends Vue {
      * @return boolean true で表示されている
      */
     public isShowingSubtitle(): boolean {
-        return this.video !== null && this.srcVideo.textTracks.length > 0 && this.srcVideo.textTracks[0].mode === 'showing';
+        return this.video !== null && this.video.textTracks.length > 0 && this.video.textTracks[0].mode === 'showing';
     }
 
     /**
      * 字幕を表示させる
      */
     public showSubtitle(): void {
-        if (this.video === null || this.srcVideo.textTracks.length === 0) {
+        if (this.video === null || this.video.textTracks.length === 0) {
             return;
         }
-        console.log("show subtitle");
-        
-        
-        this.srcVideo.textTracks[0].mode = 'showing';
-        this.lastSubtitleState = this.srcVideo.textTracks[0].mode;
+        console.log('show subtitle');
+
+        this.video.textTracks[0].mode = 'showing';
+        this.lastSubtitleState = this.video.textTracks[0].mode;
     }
 
     /**
      * 字幕を非表示にする
      */
     public disabledSubtitle(): void {
-        if (this.video === null || this.srcVideo.textTracks.length === 0) {
+        if (this.video === null || this.video.textTracks.length === 0) {
             return;
         }
 
-        this.srcVideo.textTracks[0].mode = 'disabled';
-        this.lastSubtitleState = this.srcVideo.textTracks[0].mode;
+        this.video.textTracks[0].mode = 'disabled';
+        this.lastSubtitleState = this.video.textTracks[0].mode;
     }
 
     /**
      * ユーザが最後に指定した字幕の表示状態と実際の状態がずれている場合に修正する
      */
     public fixSubtitleState(): void {
-        if (this.video === null || this.srcVideo.textTracks.length === 0) {
+        if (this.video === null || this.video.textTracks.length === 0) {
             return;
         }
 
-        if (this.srcVideo.textTracks[0].mode !== this.lastSubtitleState) {
+        if (this.video.textTracks[0].mode !== this.lastSubtitleState) {
             if (this.lastSubtitleState === 'showing') {
                 this.showSubtitle();
             } else {

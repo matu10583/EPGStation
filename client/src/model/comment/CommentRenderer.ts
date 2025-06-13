@@ -67,19 +67,13 @@ export default class CommentRenderer implements ICommentRenderer {
     private rectY: number = 0;
     private comments: ICommentBuffer = new CommentBuffer(this.maxComment);
 
-
     constructor() {}
-
 
     private resizeFontFromCanvasSize(ctx: CanvasRenderingContext2D) {
         const fontsize = this.rectY / 15;
         ctx.font = `${fontsize}px sans-serif`;
         ctx.lineWidth = fontsize / 15;
     }
-
-
-
-
 
     public addComment(text: string) {
         const newComment: CommentOnCanvas = {
@@ -88,8 +82,8 @@ export default class CommentRenderer implements ICommentRenderer {
             y: this.getResponeY(),
             speed: 0,
         };
-        console.log(text);;
-        
+        console.log(text);
+
         newComment.speed = this.calcCommentSpeed(newComment, this.rectX);
         this.comments.push(newComment);
     }
@@ -107,12 +101,10 @@ export default class CommentRenderer implements ICommentRenderer {
         return width / duration;
     }
 
-    
-
     render(deltaTime: number, ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
-        this.resizeFontFromCanvasSize(ctx)
+        this.resizeFontFromCanvasSize(ctx);
         const itr = this.comments.itr();
         while (true) {
             const result = itr.next();
@@ -127,7 +119,7 @@ export default class CommentRenderer implements ICommentRenderer {
                 this.comments.removeIfFirst(comment);
                 continue;
             }
-            
+
             this.updateCommentPos(comment, deltaTime);
 
             ctx.strokeText(comment.text, comment.x, comment.y);
@@ -135,9 +127,9 @@ export default class CommentRenderer implements ICommentRenderer {
         }
     }
 
-    public setRect(x: number,y: number){
-        if(this.rectX===x && this.rectY===y) return;
-        
+    public setRect(x: number, y: number) {
+        if (this.rectX === x && this.rectY === y) return;
+
         const itr = this.comments.itr();
         while (true) {
             const result = itr.next();
@@ -154,12 +146,11 @@ export default class CommentRenderer implements ICommentRenderer {
         this.rectY = y;
     }
 
-    private reflect(before: number, beforeSize: number, afterSize: number): number{
-        return before * (afterSize/beforeSize);
+    private reflect(before: number, beforeSize: number, afterSize: number): number {
+        return before * (afterSize / beforeSize);
     }
 
-
-    private updateCommentPos(comment: CommentOnCanvas, deltaTime: number){
-            comment.x -= comment.speed * deltaTime;
+    private updateCommentPos(comment: CommentOnCanvas, deltaTime: number) {
+        comment.x -= comment.speed * deltaTime;
     }
 }
