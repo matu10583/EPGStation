@@ -21,3 +21,4 @@ data/upload/*
 data/key/*
 !.gitkeep
 src/lib/gen
+client/src/gen
