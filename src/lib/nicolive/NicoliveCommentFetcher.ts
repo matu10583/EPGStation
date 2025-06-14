@@ -47,6 +47,10 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         }
         this.ws_client.onRecieveMessageServer = (msg)=>this.onRecieveMessageServer(msg);
         this.ws_client.onDisconnectMessageServer = ()=>this.onDisconnectMessageServer();
+        this.ws_client.onErrortMessageServer = (msg)=>{
+            this.disconnect();
+            throw new Error(`nicolive connection error: ${msg.body.code}`);
+        }
         await this.ws_client.connect(wsurl);
 
         return true;
@@ -60,7 +64,6 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
     }
 
     private async onDisconnectMessageServer(){
-        // if(msg.data.reason !== 'END_PROGRAM') return;
         let tryCount = 0;
         const maxTry = 5;
         const sleepTime = 1000;
@@ -74,6 +77,8 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
                 break;
             }
         }
+        //無理やったらすっぱりあきらめ
+        this.disconnect();
     }
 
     private onSegmentMessage(msg: MessageSegment) {

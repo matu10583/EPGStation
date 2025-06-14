@@ -4,7 +4,6 @@ import Util from '../../util/Util';
 import IServerConfigModel from '../serverConfig/IServerConfigModel';
 import ISocketIOModel from './ISocketIOModel';
 
-
 @injectable()
 class SocketIOModel implements ISocketIOModel {
     private serverConfiModel: IServerConfigModel;
@@ -82,8 +81,6 @@ class SocketIOModel implements ISocketIOModel {
 
         this.io.off(SocketIOModel.UPDATE_ENCODE_STATUS_EVENT, callback);
     }
-
-
 }
 
 namespace SocketIOModel {

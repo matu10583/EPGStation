@@ -13,6 +13,11 @@ export interface Disconnect extends MsgBase {
         reason: string;
     };
 }
+export interface Error extends MsgBase {
+    body: {
+        code: string;
+    };
+}
 export default interface INicoliveWebSocketClient {
     connect(url: string): void;
     disconnect(code?: number, reason?: string): void;
@@ -20,4 +25,5 @@ export default interface INicoliveWebSocketClient {
     set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null);
     
     set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null);
+    set onErrortMessageServer(callback: ((msg: Error) => any) | null);
 }

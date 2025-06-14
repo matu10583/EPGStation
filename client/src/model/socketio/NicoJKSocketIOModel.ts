@@ -1,29 +1,25 @@
-import { injectable, inject } from "inversify";
-import INicoJKSocketIOModel from "./INicoJKSocketIOModel";
-import ISocketIOModel from "./ISocketIOModel";
+import { injectable, inject } from 'inversify';
+import INicoJKSocketIOModel from './INicoJKSocketIOModel';
+import ISocketIOModel from './ISocketIOModel';
 import * as proto from '@/gen/proto';
 type NicoJKMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 const NicoJKMessageScheme = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 type NicoJKChunkedEntry = proto.epgstation.nicojk.request.EntrySegment;
 const NicoJKChunkedEntryScheme = proto.epgstation.nicojk.request.EntrySegment;
 
-
 @injectable()
-export default class NicoJKSocketIOModel implements INicoJKSocketIOModel{
+export default class NicoJKSocketIOModel implements INicoJKSocketIOModel {
     socketIO: ISocketIOModel;
-     private onRecieveNicoliveWrappedMap: Map<(msg: NicoJKMessage) => any, (msg: ArrayBuffer) => any> = new Map();
+    private onRecieveNicoliveWrappedMap: Map<(msg: NicoJKMessage) => any, (msg: ArrayBuffer) => any> = new Map();
 
-    constructor(
-        @inject('ISocketIOModel') socketIO: ISocketIOModel,
-    ){
-        this.socketIO = socketIO
-
+    constructor(@inject('ISocketIOModel') socketIO: ISocketIOModel) {
+        this.socketIO = socketIO;
     }
-    private getIO(){
+    private getIO() {
         return this.socketIO.getIO();
     }
 
-        /**
+    /**
      * recieve nicolive comments イベントへのコールバック追加
      * @param callback: () => void
      */
@@ -49,7 +45,6 @@ export default class NicoJKSocketIOModel implements INicoJKSocketIOModel{
         this.getIO()?.off(SocketIOModel.RECIEVE_NICOLIVE_MESSAGE, wrapped);
     }
 
-
     /**
      * nicolive commentのサーバーへ接続
      * @param callback: () => void
@@ -58,7 +53,7 @@ export default class NicoJKSocketIOModel implements INicoJKSocketIOModel{
         const chunk = NicoJKChunkedEntryScheme.encode({
             channelId: channelId,
         }).finish();
-        this.getIO()?.emit(SocketIOModel.START_NICOLIVE_COMMENT, chunk)
+        this.getIO()?.emit(SocketIOModel.START_NICOLIVE_COMMENT, chunk);
     }
 
     /**

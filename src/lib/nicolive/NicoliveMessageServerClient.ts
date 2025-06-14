@@ -30,6 +30,9 @@ export default class NicoliveMessageServerClient implements INicoliveMessageServ
 
     }
     public async runConnect() {
+        if(this.loopPromise!=null){
+            await this.loopPromise;
+        }
         this.loopPromise = this.loopcontent();
     }
 
@@ -69,6 +72,7 @@ export default class NicoliveMessageServerClient implements INicoliveMessageServ
                 console.error('error has occured. try reconnecting');
             }
         }
+        this.loopPromise= null;
     }
 
     private processSegment(seg: MessageSegment) {
