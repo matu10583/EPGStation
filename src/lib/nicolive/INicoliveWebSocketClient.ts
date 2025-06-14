@@ -7,9 +7,17 @@ export interface MessageServer extends MsgBase {
         vposBaseTime: string;
     };
 }
+
+export interface Disconnect extends MsgBase {
+    data: {
+        reason: string;
+    };
+}
 export default interface INicoliveWebSocketClient {
     connect(url: string): void;
     disconnect(code?: number, reason?: string): void;
     connected(): boolean;
     set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null);
+    
+    set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null);
 }

@@ -22,9 +22,6 @@ import ISnackbarState from '@/model/state/snackbar/ISnackbarState';
 import Util from '@/util/Util';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import * as apid from '../../../api';
-import ISocketIOModel from '@/model/socketio/ISocketIOModel';
-import * as proto from '@/gen/proto';
-type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 
 Component.registerHooks(['beforeRouteUpdate', 'beforeRouteLeave']);
 

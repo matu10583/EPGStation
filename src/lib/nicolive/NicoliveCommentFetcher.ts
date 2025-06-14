@@ -1,6 +1,6 @@
 //created by matu10583
 //ニコ生のコメントを取ってくる
-import INicoliveWebSocketClient, { MessageServer } from './INicoliveWebSocketClient';
+import INicoliveWebSocketClient, {MessageServer } from './INicoliveWebSocketClient';
 import INicoliveCommentFetcher from './INicoliveCommentFetcher';
 import * as cheerio from 'cheerio';
 import INicoliveSegmentServerClient, { NicoliveSegmentServerClientFactory } from './INicoliveSegmentServerClient';
@@ -46,6 +46,7 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
             return false;
         }
         this.ws_client.onRecieveMessageServer = (msg)=>this.onRecieveMessageServer(msg);
+        this.ws_client.onDisconnectMessageServer = ()=>this.onDisconnectMessageServer();
         await this.ws_client.connect(wsurl);
 
         return true;
@@ -56,6 +57,23 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         await this.msg_client.waitDisconnect();
         this.msg_client.onRecieveSegment =(msg)=> this.onSegmentMessage(msg);
         this.msg_client.runConnect();
+    }
+
+    private async onDisconnectMessageServer(){
+        // if(msg.data.reason !== 'END_PROGRAM') return;
+        let tryCount = 0;
+        const maxTry = 5;
+        const sleepTime = 1000;
+        while(true){
+            const result = await this.redirect(sleepTime);
+            if(result){
+                break;
+            }
+            tryCount++;
+            if(tryCount>=maxTry){
+                break;
+            }
+        }
     }
 
     private onSegmentMessage(msg: MessageSegment) {
@@ -80,6 +98,12 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         this.msg_client.disconnect();
         this.ws_client.disconnect(1000, 'Normal Closure');
 
+    }
+
+    private async redirect(sleep: number){
+        if(sleep>0) await new Promise(resolve => setTimeout(() => resolve, sleep));
+        this.disconnect();
+        return await this.connect();
     }
 
     public onRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any) {

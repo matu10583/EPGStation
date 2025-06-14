@@ -10,8 +10,8 @@ import * as aribb24js from 'aribb24.js';
 import { Component, Prop } from 'vue-property-decorator';
 import Mpegts from 'mpegts.js';
 import HLSUtil from '@/util/HLSUtil';
-import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 import * as apid from '../../../../api';
+import INicoJKSocketIOModel from '@/model/socketio/INicoJKSocketIOModel';
 
 @Component({})
 export default class LiveMpegTsVideo extends BaseVideo {
@@ -24,10 +24,10 @@ export default class LiveMpegTsVideo extends BaseVideo {
     private mepgtsPlayer: Mpegts.Player | null = null;
     private captionRenderer: aribb24js.CanvasRenderer | null = null;
     private superimposeRenderer: aribb24js.CanvasRenderer | null = null;
-    private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
+    private nicoJKSocketIoModel: INicoJKSocketIOModel = container.get<INicoJKSocketIOModel>('INicoJKSocketIOModel');
     public mounted(): void {
         super.mounted();
-        this.socketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
     }
 
     public async beforeDestroy(): Promise<void> {
@@ -49,7 +49,7 @@ export default class LiveMpegTsVideo extends BaseVideo {
             this.superimposeRenderer.dispose();
             this.superimposeRenderer = null;
         }
-        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
         super.beforeDestroy();
     }
 
@@ -205,12 +205,12 @@ export default class LiveMpegTsVideo extends BaseVideo {
     }
 
     public showComment(): void {
-        this.socketIoModel.startNicoliveCommentServer(this.channelId.toString());
+        this.nicoJKSocketIoModel.startNicoliveCommentServer(this.channelId.toString());
         super.showComment();
     }
 
     public disabledComment(): void {
-        this.socketIoModel.closeNicoliveCommentServer(this.channelId.toString());
+        this.nicoJKSocketIoModel.closeNicoliveCommentServer(this.channelId.toString());
         super.disabledComment();
     }
 

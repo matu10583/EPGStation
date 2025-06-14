@@ -5,7 +5,7 @@ import INicoliveCommentServerModel, {
 } from '../../lib/nicolive/INicoliveCommentServerModel';
 import IConfiguration from '../IConfiguration';
 import { Socket } from 'socket.io';
-import { ChunkedEntry as NicoJKEntry } from '../../lib/gen/epgstation/nicojk/service/edge/ChunkedEntry_pb';
+import { EntrySegment as NicoJKEntry } from '../../lib/gen/epgstation/nicojk/request/EntrySegment_pb';
 
 @injectable()
 export default class NicoJKCommentServerManager implements INicoJKCommentServerManager {

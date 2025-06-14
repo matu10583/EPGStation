@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package epgstation.nicojk.request;
+
+message EntrySegment{
+    string channelId = 1;
+}

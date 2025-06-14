@@ -12,7 +12,7 @@ import HLSUtil from '@/util/HLSUtil';
 import Hls from 'hls.js';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import * as apid from '../../../../api';
-import ISocketIOModel from '@/model/socketio/ISocketIOModel';
+import INicoJKSocketIOModel from '@/model/socketio/INicoJKSocketIOModel';
 
 @Component({})
 export default class LiveHLSVideo extends BaseVideo {
@@ -28,7 +28,7 @@ export default class LiveHLSVideo extends BaseVideo {
     private hls: Hls | null = null;
     private b24RenderState: IB24RenderState = container.get<IB24RenderState>('IB24RenderState');
 
-    private socketIoModel: ISocketIOModel = container.get<ISocketIOModel>('ISocketIOModel');
+    private nicoJKSocketIoModel: INicoJKSocketIOModel = container.get<INicoJKSocketIOModel>('INicoJKSocketIOModel');
 
     public async mounted(): Promise<void> {
         // HLS stream 開始
@@ -47,7 +47,7 @@ export default class LiveHLSVideo extends BaseVideo {
 
             clearInterval(this.checkEnabledTimerId);
             super.mounted();
-            this.socketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+            this.nicoJKSocketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
         }, 1000);
     }
 
@@ -62,7 +62,7 @@ export default class LiveHLSVideo extends BaseVideo {
                 text: 'ストリーム停止に失敗',
             });
         });
-        this.socketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
     }
 
     /**
@@ -141,12 +141,12 @@ export default class LiveHLSVideo extends BaseVideo {
     }
 
     public showComment(): void {
-        this.socketIoModel.startNicoliveCommentServer(this.channelId.toString());
+        this.nicoJKSocketIoModel.startNicoliveCommentServer(this.channelId.toString());
         super.showComment();
     }
 
     public disabledComment(): void {
-        this.socketIoModel.closeNicoliveCommentServer(this.channelId.toString());
+        this.nicoJKSocketIoModel.closeNicoliveCommentServer(this.channelId.toString());
         super.disabledComment();
     }
 }

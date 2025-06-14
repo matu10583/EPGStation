@@ -11,9 +11,9 @@ import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import INicoJKCommentServerManager from '../../nicolive/INicoJKCommentServerManager';
 import container from '../../ModelContainer';
 import {
-    ChunkedEntry as NicoJKEntry,
-    ChunkedEntrySchema as NicoJKEntrySchema,
-} from '../../../lib/gen/epgstation/nicojk/service/edge/ChunkedEntry_pb';
+    EntrySegment as NicoJKEntry,
+    EntrySegmentSchema as NicoJKEntrySchema,
+} from '../../../lib/gen/epgstation/nicojk/request/EntrySegment_pb';
 import { fromBinary } from '@bufbuild/protobuf';
 // import { fromJson } from '@bufbuild/protobuf';
 

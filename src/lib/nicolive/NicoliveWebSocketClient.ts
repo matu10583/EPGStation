@@ -1,6 +1,6 @@
 import NicoliveWebSocket from './NicoliveWebSocket';
 import INicoliveWebSocket from './INicoliveWebSocket';
-import INicoliveWebSocketClient, { MessageServer, MsgBase } from './INicoliveWebSocketClient';
+import INicoliveWebSocketClient, { MessageServer, MsgBase, Disconnect } from './INicoliveWebSocketClient';
 import { injectable } from 'inversify';
 //終了時とかなんも考えてないからそのうち実装
 interface Seat extends MsgBase {
@@ -8,11 +8,7 @@ interface Seat extends MsgBase {
         keepIntervalSec: number;
     };
 }
-interface Disconnect extends MsgBase {
-    data: {
-        reason: string;
-    };
-}
+
 interface Error extends MsgBase {
     body: {
         code: string;
@@ -23,8 +19,10 @@ interface Error extends MsgBase {
 export default class NicoliveWebSocketClient implements INicoliveWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
     private _onRecieveMessageServer: ((msg: MessageServer) => any) | null = null;
+    private _onDisconnectMessageServer: ((msg: Disconnect) => any) | null = null;
     private interval_id: NodeJS.Timer | null = null;
     constructor() {}
+
     connected(): boolean {
         const connected = this.socket?.connected();
         return connected === undefined ? false : connected;
@@ -113,6 +111,9 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
     private disconnected(msg: Disconnect) {
         if (this.socket === null) return;
         console.log('disconnect: ', msg.data.reason);
+        if(this._onDisconnectMessageServer!=null){
+            this._onDisconnectMessageServer(msg);
+        }
     }
     private error(msg: Error) {
         if (this.socket === null) return;
@@ -126,5 +127,8 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
     }
     public set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null) {
         this._onRecieveMessageServer = callback;
+    }
+    set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null) {
+        this._onDisconnectMessageServer = callback;    
     }
 }

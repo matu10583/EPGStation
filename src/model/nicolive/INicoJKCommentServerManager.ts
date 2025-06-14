@@ -1,4 +1,4 @@
-import { ChunkedEntry as NicoJKEntry } from '../../lib/gen/epgstation/nicojk/service/edge/ChunkedEntry_pb';
+import { EntrySegment as NicoJKEntry } from '../../lib/gen/epgstation/nicojk/request/EntrySegment_pb';
 import * as SocketIO from 'socket.io';
 
 export default interface INicoJKCommentServerManager {

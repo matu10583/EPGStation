@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package epgstation.nicojk.service.edge;
-
-message ChunkedEntry{
-    string channelId = 1;
-}

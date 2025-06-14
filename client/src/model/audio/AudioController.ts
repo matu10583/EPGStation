@@ -6,7 +6,7 @@ export default class AudioController {
 
     constructor(audioContext: AudioContext) {
         this.gainNode = audioContext.createGain();
-        this.gainNobasevide.gain.value = this.originalGain;
+        this.gainNode.gain.value = this.originalGain;
     }
 
     get node(): GainNode {

@@ -444,8 +444,15 @@ export default abstract class BaseVide extends Vue {
     // }
 
     private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
+        const at_sec = msg.meta?.at?.seconds;
+        const errorThreshold = 5000;
+        const now = Date.now();
+        
         if (msg.message?.chat?.content) {
-            this.commentRendererState.renderer.addComment(msg.message.chat.content);
+            if(at_sec != null && Math.abs(Number(at_sec)*1000-now)<errorThreshold){
+                this.commentRendererState.renderer.addComment(msg.message.chat.content);
+            }
+            
         }
     }
 

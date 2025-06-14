@@ -127,6 +127,8 @@ import VersionApiModel from '@/model/api/version/VersionApiModel';
 import IVersionApiModel from '@/model/api/version/IVersionApiModel';
 import ICommentRenderer from './comment/ICommentRenderer';
 import CommentRenderer from './comment/CommentRenderer';
+import INicoJKSocketIOModel from './socketio/INicoJKSocketIOModel';
+import NicoJKSocketIOModel from './socketio/NicoJKSocketIOModel';
 
 /**
  * container に各 Model を登録する
@@ -259,4 +261,6 @@ export default (container: Container): void => {
     container.bind<IColorThemeState>('IColorThemeState').to(ColorThemeState).inSingletonScope();
 
     container.bind<ICommentRenderer>('ICommentRenderer').to(CommentRenderer).inSingletonScope();
+
+    container.bind<INicoJKSocketIOModel>('INicoJKSocketIOModel').to(NicoJKSocketIOModel).inSingletonScope();
 };

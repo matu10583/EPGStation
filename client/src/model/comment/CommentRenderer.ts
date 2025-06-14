@@ -82,7 +82,7 @@ export default class CommentRenderer implements ICommentRenderer {
             y: this.getResponeY(),
             speed: 0,
         };
-        console.log(text);
+        // console.log(text);
 
         newComment.speed = this.calcCommentSpeed(newComment, this.rectX);
         this.comments.push(newComment);
