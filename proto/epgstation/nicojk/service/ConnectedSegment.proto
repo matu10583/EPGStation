@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package epgstation.nicojk.service;
+import "epgstation/nicojk/service/data/LiveProps.proto";
+
+message ConnectedSegment{
+    epgstation.nicojk.service.data.LiveProps props = 1;
+}

@@ -4,6 +4,7 @@ import INicoliveCommentFetcher from './INicoliveCommentFetcher';
 import * as SocketIO from 'socket.io';
 import { ChunkedMessage, ChunkedMessageSchema } from '../proto';
 import { toBinary } from '@bufbuild/protobuf';
+import { ConnectedSegmentSchema } from '../gen/epgstation/nicojk/service/ConnectedSegment_pb';
 
 @injectable()
 export default class NicoliveCommentServerModel implements INicoliveCommentServerModel {
@@ -26,6 +27,9 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
         }
 
         this.clients.add(client);
+        const seg = this.comment_fetcher.getConnectedSegment();
+        if(seg == null) return true;
+        client.emit('connectedNicolive', toBinary(ConnectedSegmentSchema, seg));
         return true;
     }
     disconnectClient(client: SocketIO.Socket): void {

@@ -28,6 +28,7 @@ export default class LiveMpegTsVideo extends BaseVideo {
     public mounted(): void {
         super.mounted();
         this.nicoJKSocketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.onRecieveConnectMessage(this.connectNicoLiveCallback);
     }
 
     public async beforeDestroy(): Promise<void> {
@@ -50,6 +51,7 @@ export default class LiveMpegTsVideo extends BaseVideo {
             this.superimposeRenderer = null;
         }
         this.nicoJKSocketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.offRecieveNicoLiveMessage(this.connectNicoLiveCallback);
         super.beforeDestroy();
     }
 

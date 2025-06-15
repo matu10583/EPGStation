@@ -4,17 +4,36 @@ import ISocketIOModel from './ISocketIOModel';
 import * as proto from '@/gen/proto';
 type NicoJKMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 const NicoJKMessageScheme = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
-type NicoJKChunkedEntry = proto.epgstation.nicojk.request.EntrySegment;
 const NicoJKChunkedEntryScheme = proto.epgstation.nicojk.request.EntrySegment;
+type NicoJKConnectedSegment = proto.epgstation.nicojk.service.ConnectedSegment;
+const NicoJKConnectedSegmentSchema = proto.epgstation.nicojk.service.ConnectedSegment;
 
 @injectable()
 export default class NicoJKSocketIOModel implements INicoJKSocketIOModel {
     socketIO: ISocketIOModel;
     private onRecieveNicoliveWrappedMap: Map<(msg: NicoJKMessage) => any, (msg: ArrayBuffer) => any> = new Map();
+    private onConnectNicoliveWrappedMap: Map<(msg: NicoJKConnectedSegment) => any, (msg: ArrayBuffer) => any> = new Map();
 
     constructor(@inject('ISocketIOModel') socketIO: ISocketIOModel) {
         this.socketIO = socketIO;
     }
+    onRecieveConnectMessage(callback: (data: NicoJKConnectedSegment) => void): void {
+        if (this.onConnectNicoliveWrappedMap.has(callback)) {
+            console.log('it has registered.');
+            return;
+        }
+
+        const wrapped = (msg: ArrayBuffer) => callback(NicoJKConnectedSegmentSchema.decode(new Uint8Array(msg)));
+        this.onConnectNicoliveWrappedMap.set(callback, wrapped);
+        this.getIO()?.on(SocketIOModel.CONNECTED_NICOLIVE, wrapped);
+    }
+    offRecieveConnectMessage(callback: (data: NicoJKConnectedSegment) => void): void {
+        console.log('unregistered');
+        const wrapped = this.onConnectNicoliveWrappedMap.get(callback);
+        if (wrapped === undefined) return;
+        this.getIO()?.off(SocketIOModel.CONNECTED_NICOLIVE, wrapped);
+    }
+
     private getIO() {
         return this.socketIO.getIO();
     }
@@ -71,4 +90,5 @@ namespace SocketIOModel {
     export const RECIEVE_NICOLIVE_MESSAGE = 'nicoliveMessage';
     export const START_NICOLIVE_COMMENT = 'joinNicolive';
     export const CLOSE_NICOLIVE_COMMENT = 'leaveNicolive';
+    export const CONNECTED_NICOLIVE = 'connectedNicolive';
 }

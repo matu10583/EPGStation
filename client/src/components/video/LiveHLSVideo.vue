@@ -48,6 +48,7 @@ export default class LiveHLSVideo extends BaseVideo {
             clearInterval(this.checkEnabledTimerId);
             super.mounted();
             this.nicoJKSocketIoModel.onRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+            this.nicoJKSocketIoModel.onRecieveConnectMessage(this.connectNicoLiveCallback);
         }, 1000);
     }
 
@@ -63,6 +64,7 @@ export default class LiveHLSVideo extends BaseVideo {
             });
         });
         this.nicoJKSocketIoModel.offRecieveNicoLiveMessage(this.recieveLiveCommentCallback);
+        this.nicoJKSocketIoModel.offRecieveConnectMessage(this.connectNicoLiveCallback);
     }
 
     /**

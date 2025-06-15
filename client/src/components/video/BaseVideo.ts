@@ -6,10 +6,12 @@ import CommentRenderer from '@/model/comment/CommentRenderer';
 import container from '@/model/ModelContainer';
 import ICommentRenderer from '@/model/comment/ICommentRenderer';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
+type NicoJKConnectedSegment = proto.epgstation.nicojk.service.ConnectedSegment;
 
 interface CommentRenderState {
     enable: boolean;
     renderer: ICommentRenderer;
+    vposBaseTime: number;
 }
 
 export default abstract class BaseVide extends Vue {
@@ -19,11 +21,13 @@ export default abstract class BaseVide extends Vue {
     protected lastCommentState: boolean = false;
 
     protected recieveLiveCommentCallback!: (msg: NicoJKChunkedMessage) => void;
+    protected connectNicoLiveCallback!: (msg: NicoJKConnectedSegment) => void;
     private renderCanvas!: HTMLCanvasElement;
     private renderContext!: CanvasRenderingContext2D | null;
     private commentRendererState: CommentRenderState = {
         enable: false,
         renderer: container.get<ICommentRenderer>('ICommentRenderer'),
+        vposBaseTime: 0,
     };
     private framePerSeconds: number = 30;
     private lastTime: number = 0;
@@ -41,6 +45,8 @@ export default abstract class BaseVide extends Vue {
         this.srcVideo.autoplay = true;
 
         this.recieveLiveCommentCallback = this._recieveLiveCommentCallback.bind(this);
+        this.connectNicoLiveCallback = this._connectNicoliveCallback.bind(this);
+
         // 時刻更新
         this.srcVideo.addEventListener('timeupdate', this.onTimeupdate.bind(this));
 
@@ -444,15 +450,24 @@ export default abstract class BaseVide extends Vue {
     // }
 
     private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
-        const at_sec = msg.meta?.at?.seconds;
-        const errorThreshold = 5000;
-        const now = Date.now();
+        const errorThreshold = 5; //5秒前以上の奴は無視;
+        const now = Date.now() / 1000;
 
-        if (msg.message?.chat?.content) {
-            if (at_sec != null && Math.abs(Number(at_sec) * 1000 - now) < errorThreshold) {
-                this.commentRendererState.renderer.addComment(msg.message.chat.content);
-            }
+        if (msg.message?.chat?.content == null || msg.message?.chat?.vpos == null) return;
+        const at_sec = msg.message.chat.vpos;
+
+        if (now - at_sec < errorThreshold) {
+            this.commentRendererState.renderer.addComment(msg.message.chat.content);
         }
+    }
+
+    private _connectNicoliveCallback(msg: NicoJKConnectedSegment) {
+        console.log("connected");
+        
+        if (msg.props?.program?.vposBaseTime == null) return;
+        console.log(msg);
+        
+        this.commentRendererState.vposBaseTime = msg.props.program.vposBaseTime;
     }
 
     /**

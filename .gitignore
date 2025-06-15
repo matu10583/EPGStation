@@ -22,3 +22,4 @@ data/key/*
 !.gitkeep
 src/lib/gen
 client/src/gen
+proto/epgstation/nicojk/service/props_example.json

@@ -9,5 +9,8 @@
     "yaml.schemas": {
         "http://json.schemastore.org/swagger-2.0": ["api.yml"]
     },
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    }
 }

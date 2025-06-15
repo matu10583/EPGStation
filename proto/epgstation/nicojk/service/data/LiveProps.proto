@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package epgstation.nicojk.service.data;
+import "google/protobuf/timestamp.proto";
+message LiveProps{
+    Site site=1;
+    Program program =2;
+
+    message Site{
+        Relive relive=1;
+
+        message Relive{
+            string webSocketUrl=1;
+        }
+    }
+
+    message Program{
+        int32 vposBaseTime = 1;
+        string watchPageUrl = 2;
+
+
+        message Statistics{
+            int32 watchCount=1;
+            int32 commentCount=2;
+        }
+    }
+}
