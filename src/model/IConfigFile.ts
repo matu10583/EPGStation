@@ -41,6 +41,7 @@ export interface NicoliveInfo {
         channel: string;
         url: string;
     }[];
+    commentLagThreshold: number;
 }
 
 /**

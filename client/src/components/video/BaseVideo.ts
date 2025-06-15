@@ -5,6 +5,7 @@ import * as proto from '@/gen/proto';
 import CommentRenderer from '@/model/comment/CommentRenderer';
 import container from '@/model/ModelContainer';
 import ICommentRenderer from '@/model/comment/ICommentRenderer';
+import IServerConfigModel from '@/model/serverConfig/IServerConfigModel';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 type NicoJKConnectedSegment = proto.epgstation.nicojk.service.ConnectedSegment;
 
@@ -33,6 +34,8 @@ export default abstract class BaseVide extends Vue {
     private lastTime: number = 0;
     private updateFrameId: number = 0;
 
+
+    private config: IServerConfigModel = container.get<IServerConfigModel>('IServerConfigModel');
     protected getSrcVideo() {
         return this.srcVideo;
     }
@@ -450,12 +453,14 @@ export default abstract class BaseVide extends Vue {
     // }
 
     private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
-        const errorThreshold = 5; //5秒前以上の奴は無視;
-        const now = Date.now() / 1000;
+        const errorThreshold = this.config.getConfig()?.nicoLive?.commentLagThreshold ?? 30; //30秒前以上の奴は無視;
+        const now = (Date.now() / 1000)-this.commentRendererState.vposBaseTime;
 
         if (msg.message?.chat?.content == null || msg.message?.chat?.vpos == null) return;
-        const at_sec = msg.message.chat.vpos;
-
+        const at_sec = msg.message.chat.vpos/100;
+        
+        
+        
         if (now - at_sec < errorThreshold) {
             this.commentRendererState.renderer.addComment(msg.message.chat.content);
         }

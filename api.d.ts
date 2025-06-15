@@ -518,6 +518,9 @@ export interface Config {
         };
     };
     kodiHosts?: string[];
+    nicoLive?:{
+        commentLagThreshold?:number
+    }
 }
 
 /**
