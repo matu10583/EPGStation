@@ -40,8 +40,11 @@ export interface NicoliveInfo {
     jk_url: {
         channel: string;
         url: string;
+        id: string
     }[];
     commentLagThreshold: number;
+    kakolog_url: string;
+    nxjikkyo_ws_url?:string;
 }
 
 /**

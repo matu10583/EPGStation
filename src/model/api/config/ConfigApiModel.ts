@@ -170,10 +170,10 @@ export default class ConfigApiModel implements IConfigApiModel {
                 return k.name;
             });
         }
-        if(typeof config.nicoLive !== 'undefined'){
+        if (typeof config.nicoLive !== 'undefined') {
             result.nicoLive = {
                 commentLagThreshold: config.nicoLive.commentLagThreshold,
-            }
+            };
         }
 
         return result;

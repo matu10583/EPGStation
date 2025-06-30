@@ -129,6 +129,10 @@ import ICommentRenderer from './comment/ICommentRenderer';
 import CommentRenderer from './comment/CommentRenderer';
 import INicoJKSocketIOModel from './socketio/INicoJKSocketIOModel';
 import NicoJKSocketIOModel from './socketio/NicoJKSocketIOModel';
+import INicoJKApiModel from './api/nicojk/INicoJKApiModel';
+import NicoJKApiModel from './api/nicojk/NicoJKApiModel';
+import CommentSender from './comment/CommentSender';
+import ICommentSender from './comment/ICommentSender';
 
 /**
  * container に各 Model を登録する
@@ -263,4 +267,8 @@ export default (container: Container): void => {
     container.bind<ICommentRenderer>('ICommentRenderer').to(CommentRenderer).inSingletonScope();
 
     container.bind<INicoJKSocketIOModel>('INicoJKSocketIOModel').to(NicoJKSocketIOModel).inSingletonScope();
+
+    container.bind<INicoJKApiModel>('INicoJKApiModel').to(NicoJKApiModel).inSingletonScope();
+
+    container.bind<ICommentSender>('ICommentSender').to(CommentSender).inSingletonScope();
 };

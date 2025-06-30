@@ -7,5 +7,5 @@ export default interface INicoliveCommentFetcher {
     onRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any): void;
     offRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any): void;
     connected(): boolean;
-    getConnectedSegment():ConnectedSegment|null;
+    getConnectedSegment(): ConnectedSegment | null;
 }

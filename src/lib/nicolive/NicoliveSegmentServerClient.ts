@@ -8,7 +8,7 @@ export default class NicoliveSegmentServerClient implements INicoliveSegmentServ
     constructor(baseUrl: string) {
         this.baseurl = baseUrl;
     }
-    public getBaseUrl():string{
+    public getBaseUrl(): string {
         return this.baseurl;
     }
     disconnect(): void {

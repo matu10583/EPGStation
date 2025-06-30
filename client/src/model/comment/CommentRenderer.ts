@@ -12,17 +12,22 @@ interface ICommentBuffer {
     length(): number;
     push(c: CommentOnCanvas): void;
     itr(): {
-        next: () => IteratorResult<CommentOnCanvas>;
+        next: () => IteratorResult<CommentOnCanvas | null>;
     };
     removeIfFirst(c: CommentOnCanvas): void;
+    clear(): void;
 }
 class CommentBuffer implements ICommentBuffer {
-    private contents: CommentOnCanvas[];
+    private contents: (CommentOnCanvas | null)[];
     private start: number = 0;
     private end: number = 0;
 
     constructor(maxSize: number) {
         this.contents = new Array(maxSize).fill(null);
+    }
+    clear(): void {
+        this.start = this.end = 0;
+        this.contents.fill(null);
     }
     removeIfFirst(c: CommentOnCanvas) {
         if (this.contents[this.start] === c) {
@@ -46,7 +51,7 @@ class CommentBuffer implements ICommentBuffer {
     itr() {
         let index = this.start;
         return {
-            next: (): IteratorResult<CommentOnCanvas> => {
+            next: (): IteratorResult<CommentOnCanvas | null> => {
                 const isEnd = index === this.end;
                 if (isEnd) {
                     return { value: undefined as any, done: true };
@@ -68,6 +73,9 @@ export default class CommentRenderer implements ICommentRenderer {
     private comments: ICommentBuffer = new CommentBuffer(this.maxComment);
 
     constructor() {}
+    flushComment(): void {
+        this.comments.clear();
+    }
 
     private resizeFontFromCanvasSize(ctx: CanvasRenderingContext2D) {
         const fontsize = this.rectY / 15;
@@ -112,7 +120,9 @@ export default class CommentRenderer implements ICommentRenderer {
                 break;
             }
             const comment = result.value;
-
+            if (comment == null) {
+                throw new Error('invalid access on comment buffer');
+            }
             //画面外
             if (comment.x + ctx.measureText(comment.text).width < 0) {
                 //処理数を減らすために消せるようなら消す
@@ -137,7 +147,9 @@ export default class CommentRenderer implements ICommentRenderer {
                 break;
             }
             const comment = result.value;
-
+            if (comment == null) {
+                throw new Error('invalid access on comment buffer');
+            }
             comment.speed = this.calcCommentSpeed(comment, x);
             comment.x = this.reflect(comment.x, this.rectX, x);
             comment.y = this.reflect(comment.y, this.rectY, y);

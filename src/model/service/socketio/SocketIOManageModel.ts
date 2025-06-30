@@ -62,13 +62,12 @@ export default class SocketIOManageModel implements ISocketIOManageModel {
             this.log.system.info('connect socket');
             socket.data.nicoliveRoomData = null;
             socket.on('joinNicolive', async (req: ArrayBuffer) => {
-                try{
-                const decoded = fromBinary(NicoJKEntrySchema, new Uint8Array(req));
-                const nicoJKManager = container.get<INicoJKCommentServerManager>('INicoJKCommentServerManager');
-                await nicoJKManager.connectClient(socket, decoded);
-                socket.data.nicoliveRoomData = decoded;
-                }
-                catch(e){
+                try {
+                    const decoded = fromBinary(NicoJKEntrySchema, new Uint8Array(req));
+                    const nicoJKManager = container.get<INicoJKCommentServerManager>('INicoJKCommentServerManager');
+                    await nicoJKManager.connectClient(socket, decoded);
+                    socket.data.nicoliveRoomData = decoded;
+                } catch (e) {
                     console.error(e);
                 }
             });
@@ -79,7 +78,7 @@ export default class SocketIOManageModel implements ISocketIOManageModel {
                 socket.data.nicoliveRoomData = null;
             });
             socket.on('disconnecting', () => {
-                if(socket.data.nicoliveRoomData===null) return;
+                if (socket.data.nicoliveRoomData === null) return;
                 const nicoJKManager = container.get<INicoJKCommentServerManager>('INicoJKCommentServerManager');
                 nicoJKManager.disconnectClient(socket, socket.data.nicoliveRoomData);
                 socket.data.nicoliveRoomData = null;

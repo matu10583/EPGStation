@@ -171,6 +171,8 @@ import NicoliveMessageServerClient from '../lib/nicolive/NicoliveMessageServerCl
 import { NicoliveSegmentServerClientFactory } from '../lib/nicolive/INicoliveSegmentServerClient';
 import NicoliveSegmentServerClient from '../lib/nicolive/NicoliveSegmentServerClient';
 import { MessageSegment } from '../lib/proto';
+import INicoJKApiModel from './api/nicojk/INicoJKApiModel';
+import NicoJKApiModel from './api/nicojk/NicoJKApiModel';
 
 /**
  * container に 各 Model を登録する
@@ -444,4 +446,6 @@ export const set = (container: Container): void => {
     container.bind<IStreamApiModel>('IStreamApiModel').to(StreamApiModel).inSingletonScope();
 
     container.bind<IStorageApiModel>('IStorageApiModel').to(StorageApiModel).inSingletonScope();
+
+    container.bind<INicoJKApiModel>('INicoJKApiModel').to(NicoJKApiModel).inSingletonScope();
 };

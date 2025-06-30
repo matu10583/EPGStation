@@ -9,6 +9,7 @@ import ISocketIOModel from '@/model/socketio/ISocketIOModel';
 import IRecordedStreamingVideoState from '@/model/state/recorded/streaming/IRecordedStreamingVideoState';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import * as apid from '../../../../api';
+import ICommentSender from '@/model/comment/ICommentSender';
 
 interface VideoSrcInfo {
     videoFileId: apid.VideoFileId;
@@ -42,6 +43,7 @@ export default class RecordedStreamingVideo extends BaseVideo {
     private lastUpdatePauseState: number = 0; // 最後に pauseStateBeforeCurrentTime を更新した時間
     private updateDurationTimerId: number | undefined; // 録画中の番組の動画長を更新するためのタイマー
     private setCurrentTimeTimerId: number | undefined; // setCurrentTime を大量に呼び出さないようにするためのタイマー
+    private commentSender: ICommentSender = container.get('ICommentSender');
 
     public created(): void {
         // socket.io イベント
@@ -79,6 +81,7 @@ export default class RecordedStreamingVideo extends BaseVideo {
     }
 
     public async beforeDestroy(): Promise<void> {
+        this.commentSender.resetSrc();
         // socket.io イベント
         this.socketIoModel.offUpdateState(this.onUpdateStatusCallback);
 
@@ -97,6 +100,7 @@ export default class RecordedStreamingVideo extends BaseVideo {
                 playPosition: this.basePlayPosition,
             }),
         );
+        this.commentSender.setSrc(this.recordedId, this);
         this.load();
     }
 
@@ -182,8 +186,12 @@ export default class RecordedStreamingVideo extends BaseVideo {
                     // console.error(err);
                 });
             }
+            this.commentSender.updateSeek();
             this.dummyPlayPosition = null;
         }, 200);
+    }
+    public isEnableComment(): boolean {
+        return this.commentSender.available();
     }
 }
 </script>

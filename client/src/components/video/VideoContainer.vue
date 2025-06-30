@@ -125,6 +125,7 @@
                     v-if="videoParam.type == 'Normal'"
                     ref="video"
                     v-bind:videoSrc.sync="videoParam.src"
+                    v-bind:recordedId="videoParam.recordedId"
                     v-on:timeupdate="onTimeupdate"
                     v-on:waiting="onWaiting"
                     v-on:loadeddata="onLoadeddata"

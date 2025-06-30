@@ -11,7 +11,6 @@ class SocketIOModel implements ISocketIOModel {
 
     constructor(@inject('IServerConfigModel') serverConfiModel: IServerConfigModel) {
         this.serverConfiModel = serverConfiModel;
-
     }
 
     /**

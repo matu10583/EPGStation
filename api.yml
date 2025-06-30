@@ -15,7 +15,6 @@ components:
         UnixtimeMS:
             description: 時刻 (ms)
             type: integer
-
         ChannelId:
             description: 放送局 id
             type: integer
@@ -1557,6 +1556,28 @@ components:
                 errors:
                     description: 'Error'
                     type: string
+        NicoJKCommentItem:
+            type: object
+            readOnly: true
+            required:
+                - vpos
+                - content
+            properties:
+                vpos:
+                    $ref: '#/components/schemas/UnixtimeMS'
+                content:
+                    description: コメント内容
+                    type: string
+        NicoJKComments:
+            description: ニコニコ実況のコメント配列
+            type: object
+            required:
+                - items
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/NicoJKCommentItem'
 
     parameters:
         Offset:
@@ -1878,3 +1899,4 @@ components:
             schema:
                 type: integer
                 default: 3
+

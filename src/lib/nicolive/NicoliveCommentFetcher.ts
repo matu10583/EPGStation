@@ -1,16 +1,14 @@
 //created by matu10583
 //ニコ生のコメントを取ってくる
-import INicoliveWebSocketClient, {MessageServer } from './INicoliveWebSocketClient';
+import INicoliveWebSocketClient, { MessageServer } from './INicoliveWebSocketClient';
 import INicoliveCommentFetcher from './INicoliveCommentFetcher';
 import * as cheerio from 'cheerio';
 import INicoliveSegmentServerClient, { NicoliveSegmentServerClientFactory } from './INicoliveSegmentServerClient';
 import type { ChunkedMessage, MessageSegment } from '../proto';
 import INicoliveMessageServerClient from './INicoliveMessageServerClient';
 import { ConnectedSegment, ConnectedSegmentSchema } from '../gen/epgstation/nicojk/service/ConnectedSegment_pb';
-import { create} from '@bufbuild/protobuf';
+import { create } from '@bufbuild/protobuf';
 import { LiveProps } from '../gen/epgstation/nicojk/service/data/LiveProps_pb';
-
-
 
 // @injectable()
 export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
@@ -20,7 +18,7 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
     private seg_clients: Array<INicoliveSegmentServerClient> = [];
     private comment_recieve_callback: Set<(data: ChunkedMessage) => any> = new Set();
     private page_url: string;
-    private connectedSeg: ConnectedSegment|null=null;
+    private connectedSeg: ConnectedSegment | null = null;
 
     constructor(
         _wsclient: INicoliveWebSocketClient,
@@ -45,17 +43,17 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
             return false;
         }
         const ws_url = props_obj.site?.relive?.webSocketUrl;
-        if(ws_url == null) return false;
-        this.ws_client.onRecieveMessageServer = (msg)=>this.onRecieveMessageServer(msg);
-        this.ws_client.onDisconnectMessageServer = ()=>this.onDisconnectMessageServer();
-        this.ws_client.onErrortMessageServer = (msg)=>{
+        if (ws_url == null) return false;
+        this.ws_client.onRecieveMessageServer = msg => this.onRecieveMessageServer(msg);
+        this.ws_client.onDisconnectMessageServer = () => this.onDisconnectMessageServer();
+        this.ws_client.onErrortMessageServer = msg => {
             this.disconnect();
             throw new Error(`nicolive connection error: ${msg.body.code}`);
-        }
+        };
         await this.ws_client.connect(ws_url);
 
-        this.connectedSeg = create(ConnectedSegmentSchema,{
-            props: props_obj
+        this.connectedSeg = create(ConnectedSegmentSchema, {
+            props: props_obj,
         });
         return true;
     }
@@ -63,21 +61,21 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
     private async onRecieveMessageServer(msg: MessageServer) {
         this.msg_client.setBaseUrl(msg.data.viewUri);
         await this.msg_client.waitDisconnect();
-        this.msg_client.onRecieveSegment =(msg)=> this.onSegmentMessage(msg);
+        this.msg_client.onRecieveSegment = msg => this.onSegmentMessage(msg);
         this.msg_client.runConnect();
     }
 
-    private async onDisconnectMessageServer(){
+    private async onDisconnectMessageServer() {
         let tryCount = 0;
         const maxTry = 5;
         const sleepTime = 1000;
-        while(true){
+        while (true) {
             const result = await this.redirect(sleepTime);
-            if(result){
+            if (result) {
                 break;
             }
             tryCount++;
-            if(tryCount>=maxTry){
+            if (tryCount >= maxTry) {
                 break;
             }
         }
@@ -87,7 +85,7 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
 
     private onSegmentMessage(msg: MessageSegment) {
         const seg = this.segment_factory(msg);
-        seg.onRecieveComment = (msg)=>this.onRecieveSegmentMessage(msg);
+        seg.onRecieveComment = msg => this.onRecieveSegmentMessage(msg);
         seg.runConnect();
         this.seg_clients = this.seg_clients.filter(c => {
             return c.connected();
@@ -100,22 +98,21 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
     }
 
     public disconnect(): void {
-        for(const c of this.seg_clients){
+        for (const c of this.seg_clients) {
             c.disconnect();
         }
-        this.seg_clients.length=0;
+        this.seg_clients.length = 0;
         this.msg_client.disconnect();
         this.ws_client.disconnect(1000, 'Normal Closure');
         this.connectedSeg = null;
-
     }
 
-    getConnectedSegment(){
+    getConnectedSegment() {
         return this.connectedSeg;
     }
 
-    private async redirect(sleep: number){
-        if(sleep>0) await new Promise(resolve => setTimeout(() => resolve, sleep));
+    private async redirect(sleep: number) {
+        if (sleep > 0) await new Promise(resolve => setTimeout(() => resolve, sleep));
         this.disconnect();
         return await this.connect();
     }
@@ -134,7 +131,7 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         }
     }
 
-    private async fetchWSUrl(url: string): Promise<LiveProps|null> {
+    private async fetchWSUrl(url: string): Promise<LiveProps | null> {
         const html = await fetch(url, { method: 'GET' }).then(async response => {
             return await response.text();
         });

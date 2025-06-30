@@ -14,6 +14,7 @@ import Util from '@/util/Util';
 import Hls from 'hls.js';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import * as apid from '../../../../api';
+import ICommentSender from '@/model/comment/ICommentSender';
 
 interface VideoSrcInfo {
     videoFileId: apid.VideoFileId;
@@ -47,6 +48,7 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
     private updateDurationTimerId: number | undefined; // 録画中の番組の動画長を更新するためのタイマー
     private setCurrentTimeTimerId: number | undefined; // setCurrentTime を大量に呼び出さないようにするためのタイマー
     private lastSeekTime: number = 0; // setCurrentTime 実行中に setCurrentTime が重ねて実行されたか確認するための変数
+    private commentSender: ICommentSender = container.get<ICommentSender>('ICommentSender');
 
     public created(): void {
         // socket.io イベント
@@ -137,6 +139,7 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
      * destory hls
      */
     private destoryHls(): void {
+        this.commentSender.resetSrc();
         if (this.hls !== null) {
             this.hls.stopLoad();
             this.hls.detachMedia();
@@ -202,6 +205,8 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
             });
             this.b24RenderState.init(this.video, this.hls);
         }
+        this.commentSender.setSrc(this.recordedId, this);
+        console.log('set src: ', this.commentSender.available());
     }
 
     /**
@@ -301,6 +306,7 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
             }
             await Util.sleep(500);
             this.video.playbackRate = playbackRate;
+            this.commentSender.updateSeek();
             this.dummyPlayPosition = null;
         }, 200);
     }
@@ -311,6 +317,10 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
      */
     public isEnabledSubtitles(): boolean {
         return this.b24RenderState.isInited() !== true ? true : super.isEnabledSubtitles();
+    }
+
+    public isEnableComment(): boolean {
+        return this.commentSender.available();
     }
 
     /**

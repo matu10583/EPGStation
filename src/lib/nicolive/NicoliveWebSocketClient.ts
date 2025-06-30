@@ -9,8 +9,6 @@ interface Seat extends MsgBase {
     };
 }
 
-
-
 @injectable()
 export default class NicoliveWebSocketClient implements INicoliveWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
@@ -19,7 +17,6 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
     private _onErrorMessageServer: ((msg: Error) => any) | null = null;
     private interval_id: NodeJS.Timer | null = null;
     constructor() {}
-
 
     connected(): boolean {
         const connected = this.socket?.connected();
@@ -109,14 +106,14 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
     private disconnected(msg: Disconnect) {
         if (this.socket === null) return;
         console.log('disconnect: ', msg.data.reason);
-        if(this._onDisconnectMessageServer!=null){
+        if (this._onDisconnectMessageServer != null) {
             this._onDisconnectMessageServer(msg);
         }
     }
     private error(msg: Error) {
         if (this.socket === null) return;
         console.log('error: ', msg.body.code);
-        if(this._onErrorMessageServer != null){
+        if (this._onErrorMessageServer != null) {
             this._onErrorMessageServer(msg);
         }
     }
@@ -130,9 +127,9 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
         this._onRecieveMessageServer = callback;
     }
     set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null) {
-        this._onDisconnectMessageServer = callback;    
+        this._onDisconnectMessageServer = callback;
     }
-        set onErrortMessageServer(callback: ((msg: Error) => any) | null) {
+    set onErrortMessageServer(callback: ((msg: Error) => any) | null) {
         this._onErrorMessageServer = callback;
     }
 }

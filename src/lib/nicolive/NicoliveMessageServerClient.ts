@@ -12,31 +12,30 @@ export default class NicoliveMessageServerClient implements INicoliveMessageServ
     private baseurl: string | null = null;
     private nextStreamAt: string = 'now';
     public onRecieveSegment: ((seg: MessageSegment) => any) | null = null;
-    private loopPromise: Promise<void>|null = null;
+    private loopPromise: Promise<void> | null = null;
     constructor() {}
 
     public setBaseUrl(url: string) {
         this.baseurl = url;
     }
 
-    public async waitDisconnect():Promise<void>{
+    public async waitDisconnect(): Promise<void> {
         this.disconnect();
-        if(this.loopPromise===null) return;
+        if (this.loopPromise === null) return;
         await this.loopPromise;
     }
 
-    public disconnect(){
+    public disconnect() {
         this.abortController.abort();
-
     }
     public async runConnect() {
-        if(this.loopPromise!=null){
+        if (this.loopPromise != null) {
             await this.loopPromise;
         }
         this.loopPromise = this.loopcontent();
     }
 
-    private async loopcontent(): Promise<void>{
+    private async loopcontent(): Promise<void> {
         this.abortController = new AbortController();
         while (!this.abortController.signal.aborted) {
             try {
@@ -72,7 +71,7 @@ export default class NicoliveMessageServerClient implements INicoliveMessageServ
                 console.error('error has occured. try reconnecting');
             }
         }
-        this.loopPromise= null;
+        this.loopPromise = null;
     }
 
     private processSegment(seg: MessageSegment) {

@@ -518,9 +518,9 @@ export interface Config {
         };
     };
     kodiHosts?: string[];
-    nicoLive?:{
-        commentLagThreshold?:number
-    }
+    nicoLive?: {
+        commentLagThreshold?: number;
+    };
 }
 
 /**
@@ -759,4 +759,16 @@ export interface StorageInfo {
  */
 export interface VersionInfo {
     version: string;
+}
+
+/**
+ * ニコニコ実況コメ
+ *
+ */
+export interface NicoJKComments {
+    comments: NicoJKCommentItem[];
+}
+export interface NicoJKCommentItem {
+    vpos: number;
+    content: string;
 }

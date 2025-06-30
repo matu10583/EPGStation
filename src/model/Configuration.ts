@@ -265,9 +265,10 @@ namespace Configuration {
             },
         },
         streamFilePath: path.join(__dirname, '..', '..', 'data', 'streamfiles'),
-        nicoLive:{
-            commentLagThreshold:30,
-            jk_url:[]
+        nicoLive: {
+            commentLagThreshold: 30,
+            jk_url: [],
+            kakolog_url: "",
         },
     };
 }

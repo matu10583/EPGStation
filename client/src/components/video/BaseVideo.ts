@@ -34,9 +34,8 @@ export default abstract class BaseVide extends Vue {
     private lastTime: number = 0;
     private updateFrameId: number = 0;
 
-
     private config: IServerConfigModel = container.get<IServerConfigModel>('IServerConfigModel');
-    protected getSrcVideo() {
+    public getSrcVideo() {
         return this.srcVideo;
     }
 
@@ -68,7 +67,9 @@ export default abstract class BaseVide extends Vue {
             () => {
                 this.updateCanvas(0);
                 this.initCaptureCanvas();
-                this.updateFrameId = requestAnimationFrame(this.render.bind(this));
+                this.updateFrameId = (this.srcVideo as any).requestVideoFrameCallback
+                    ? (this.srcVideo as any).requestVideoFrameCallback((ts: number) => this.render(ts))
+                    : requestAnimationFrame(ts => this.render(ts));
             },
             { once: true },
         );
@@ -106,16 +107,16 @@ export default abstract class BaseVide extends Vue {
     private render(timestamp: number) {
         if (this.video === null) return;
         this.updateCanvas(timestamp);
-        this.updateFrameId = requestAnimationFrame(ts => {
-            this.render(ts);
-        });
+        this.updateFrameId = (this.srcVideo as any).requestVideoFrameCallback
+            ? (this.srcVideo as any).requestVideoFrameCallback((ts: number) => this.render(ts))
+            : requestAnimationFrame(ts => this.render(ts));
     }
 
     private updateCanvas(ts: number) {
-        if (this.lastTime === 0) this.lastTime = ts;
+        if (this.lastTime === 0) this.lastTime = this.srcVideo.currentTime;
         if (this.renderContext === null) return;
 
-        const delta = ts - this.lastTime;
+        const delta = (this.srcVideo.currentTime - this.lastTime) * 1000;
 
         this.renderCanvas.width = this.srcVideo.videoWidth;
         this.renderCanvas.height = this.srcVideo.videoHeight;
@@ -140,7 +141,7 @@ export default abstract class BaseVide extends Vue {
         if (this.commentRendererState.enable) {
             this.commentRendererState.renderer.render(delta, this.renderContext);
         }
-        this.lastTime = ts;
+        this.lastTime = this.srcVideo.currentTime;
     }
 
     /**
@@ -260,6 +261,7 @@ export default abstract class BaseVide extends Vue {
 
     public beforeDestroy(): void {
         cancelAnimationFrame(this.updateFrameId);
+        this.commentRendererState.renderer.flushComment();
         this.unload();
     }
 
@@ -322,6 +324,10 @@ export default abstract class BaseVide extends Vue {
      */
     public getCurrentTime(): number {
         return this.video === null || this.srcVideo.currentTime === Infinity || isNaN(this.video.currentTime) ? 0 : this.srcVideo.currentTime;
+    }
+
+    public getCurrentTimeMS(): number {
+        return this.getCurrentTime() * 1000;
     }
 
     /**
@@ -447,31 +453,35 @@ export default abstract class BaseVide extends Vue {
     }
 
     //コメントを追加する
-    // public addComment(text: string): void {
-    //     if (this.commentOverlay == null) return;
-    //     this.commentOverlay.addComment(text);
-    // }
+    public addComment(text: string): void {
+        console.log(text);
+
+        this.commentRendererState.renderer.addComment(text);
+    }
+    public flushComment(): void {
+        console.log('flush');
+
+        this.commentRendererState.renderer.flushComment();
+    }
 
     private _recieveLiveCommentCallback(msg: NicoJKChunkedMessage) {
         const errorThreshold = this.config.getConfig()?.nicoLive?.commentLagThreshold ?? 30; //30秒前以上の奴は無視;
-        const now = (Date.now() / 1000)-this.commentRendererState.vposBaseTime;
+        const now = Date.now() / 1000 - this.commentRendererState.vposBaseTime;
 
         if (msg.message?.chat?.content == null || msg.message?.chat?.vpos == null) return;
-        const at_sec = msg.message.chat.vpos/100;
-        
-        
-        
+        const at_sec = msg.message.chat.vpos / 100;
+
         if (now - at_sec < errorThreshold) {
             this.commentRendererState.renderer.addComment(msg.message.chat.content);
         }
     }
 
     private _connectNicoliveCallback(msg: NicoJKConnectedSegment) {
-        console.log("connected");
-        
+        console.log('connected');
+
         if (msg.props?.program?.vposBaseTime == null) return;
         console.log(msg);
-        
+
         this.commentRendererState.vposBaseTime = msg.props.program.vposBaseTime;
     }
 

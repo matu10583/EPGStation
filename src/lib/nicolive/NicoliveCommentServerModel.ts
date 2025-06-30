@@ -16,8 +16,7 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
 
     init(fetcher: INicoliveCommentFetcher): void {
         this.comment_fetcher = fetcher;
-        this.comment_fetcher.onRecieveNicoliveMessage(
-            (msg)=>this.broadcastComments(msg));
+        this.comment_fetcher.onRecieveNicoliveMessage(msg => this.broadcastComments(msg));
     }
 
     async connectClient(client: SocketIO.Socket): Promise<boolean> {
@@ -28,7 +27,7 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
 
         this.clients.add(client);
         const seg = this.comment_fetcher.getConnectedSegment();
-        if(seg == null) return true;
+        if (seg == null) return true;
         client.emit('connectedNicolive', toBinary(ConnectedSegmentSchema, seg));
         return true;
     }
@@ -63,11 +62,10 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
 
     private broadcastComments(msg: ChunkedMessage) {
         const chunk = toBinary(ChunkedMessageSchema, msg);
-        this.emitAllSocet("nicoliveMessage", chunk);
+        this.emitAllSocet('nicoliveMessage', chunk);
     }
 
-
-    private emitAllSocet(ev:string, ...args:any[]){
+    private emitAllSocet(ev: string, ...args: any[]) {
         for (const c of this.clients) {
             c.emit(ev, ...args);
         }
