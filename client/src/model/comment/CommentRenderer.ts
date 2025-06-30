@@ -102,7 +102,7 @@ export default class CommentRenderer implements ICommentRenderer {
 
     private calcCommentSpeed(comment: CommentOnCanvas, width: number): number {
         const baseDuration = 5000;
-        const minDuration = 1500;
+        const minDuration = 2000;
         const decreasePerChar = 150;
 
         const duration = Math.max(minDuration, baseDuration - decreasePerChar * comment.text.length);
