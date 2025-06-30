@@ -203,6 +203,7 @@ export const set = (container: Container): void => {
             const seg_factory = context.container.get<NicoliveSegmentServerClientFactory>(
                 'NicoliveSegmentServerClientFactory',
             );
+            //TODO: NXJikkyo互換を作るならコメント取得の仕方がだいぶ違いそうなので新しいクラスを作る
             server.init(new NicoliveCommentFetcher(ws_client, msg_client, seg_factory, config.url));
             return server;
         };

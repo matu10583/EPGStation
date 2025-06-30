@@ -4,6 +4,7 @@ import INicoliveCommentFetcher from './INicoliveCommentFetcher';
 
 export interface NicoliveCommentServerConfig {
     url: string;
+    wss_url?: string|undefined;
 }
 export type NicoliveCommentServerModelFactory = (data: NicoliveCommentServerConfig) => INicoliveCommentServerModel;
 

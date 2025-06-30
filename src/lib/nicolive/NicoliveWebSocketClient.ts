@@ -9,6 +9,16 @@ interface Seat extends MsgBase {
     };
 }
 
+//NXJikkyo 互換
+interface NXJKRoom extends MsgBase{
+    data:{
+        messageServer:{
+            uri: string
+        }
+        vposBaseTime: string
+    }
+};
+
 @injectable()
 export default class NicoliveWebSocketClient implements INicoliveWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
@@ -84,6 +94,8 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
             case 'messageServer':
                 this.processMessageServer(msg as MessageServer);
                 break;
+            case 'room':
+                this.processNXRoom(msg as NXJKRoom);
         }
     }
 
@@ -122,6 +134,14 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
         if (this._onRecieveMessageServer) {
             this._onRecieveMessageServer(msg);
         }
+    }
+    private processNXRoom(msg: NXJKRoom){
+        this.processMessageServer({
+            data:{
+                viewUri: msg.data.messageServer.uri,
+                vposBaseTime: msg.data.vposBaseTime
+            }
+        }as MessageServer);
     }
     public set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null) {
         this._onRecieveMessageServer = callback;

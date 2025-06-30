@@ -17,15 +17,14 @@ export default class NicoJKCommentServerManager implements INicoJKCommentServerM
         @inject('IConfiguration') configuration: IConfiguration,
     ) {
         const config = configuration.getConfig();
+        if (config.nicoLive == undefined) return;
         const jk_urls = config.nicoLive?.jk_url;
-        if (jk_urls === undefined) return;
 
         for (const entity of jk_urls) {
+            const wss_url = config.nicoLive.nxjikkyo_ws_url?.replace('{{id}}', entity.id);
             this.channel_servers.set(
                 entity.channel.toString(),
-                serverFactory({
-                    url: entity.url,
-                }),
+                serverFactory({url: entity.url, wss_url: wss_url})
             );
         }
     }
