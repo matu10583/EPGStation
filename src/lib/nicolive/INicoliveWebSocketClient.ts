@@ -8,6 +8,15 @@ export interface MessageServer extends MsgBase {
     };
 }
 
+export interface Room extends MsgBase{
+    data: {
+        messageServer:{
+            uri: string
+        },
+        vposBaseTime: string
+    }
+}
+
 export interface Disconnect extends MsgBase {
     data: {
         reason: string;
