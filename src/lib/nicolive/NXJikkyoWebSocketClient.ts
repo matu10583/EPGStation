@@ -1,32 +1,18 @@
 import NicoliveWebSocket from './NicoliveWebSocket';
 import INicoliveWebSocket from './INicoliveWebSocket';
-import { MessageServer, MsgBase, Disconnect, Error } from './INicoliveWebSocketClient';
+// import { MessageServer, MsgBase, Disconnect, Error } from './INicoliveWebSocketClient';
 import { injectable } from 'inversify';
 import INXJikkyoWebSocketClient from './INXJikkyoWebSocketClient';
+import { fromJson } from '@bufbuild/protobuf';
+import { ChunkedMessage, ChunkedMessageSchema } from '../proto';
 //終了時とかなんも考えてないからそのうち実装
-interface Seat extends MsgBase {
-    data: {
-        keepIntervalSec: number;
-    };
-}
-
-//NXJikkyo 互換
-interface NXJKRoom extends MsgBase{
-    data:{
-        messageServer:{
-            uri: string
-        }
-        vposBaseTime: string
-    }
-};
 
 @injectable()
 export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
-    private _onRecieveMessageServer: ((msg: MessageServer) => any) | null = null;
-    private _onDisconnectMessageServer: ((msg: Disconnect) => any) | null = null;
-    private _onErrorMessageServer: ((msg: Error) => any) | null = null;
-    private interval_id: NodeJS.Timer | null = null;
+    private _onRecieveChunkedMessages: Set<((msg: ChunkedMessage) => any)> = new Set();
+    // private _onDisconnectMessageServer: (() => any) | null = null;
+    // private _onErrorMessageServer: (() => any) | null = null;
     constructor() {}
 
     connected(): boolean {
@@ -34,12 +20,12 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
         return connected === undefined ? false : connected;
     }
 
-    public async connect(url: string) {
+    public async connect(url: string, thread: string, threadkey: string) {
         this.socket = new NicoliveWebSocket(url);
 
         this.socket.on('open', () => {
             console.log(`Connect Succeess: `, url);
-            this.sendWelcome();
+            this.sendWelcome(thread, threadkey);
         });
         this.socket.on('message', event => {
             try {
@@ -63,13 +49,10 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
         if (this.socket === null) return;
         this.socket.close(code, reason);
         this.socket = null;
-        if (this.interval_id !== null) {
-            clearInterval(this.interval_id);
-            this.interval_id = null;
-        }
+
     }
 
-    private sendWelcome() {
+    private sendWelcome(thread: string, threadkey: string) {
         if (this.socket === null) return;
         const welcome_msg =
             JSON.stringify([
@@ -78,8 +61,8 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
                 {
                     thread:{
                         version: `20061206`,
-                        thread: 0,
-                        threadkey: 0,
+                        thread: thread,
+                        threadkey: threadkey,
                         user_id: '',
                         res_from: -100
                     }
@@ -98,40 +81,93 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
         }
 
         if(msg.ping !== undefined && msg.ping.content === 'rf:0'){
-            
+            //過去コメントが一気に流れてそれがここで終わるらしい
+            return;
         }
-        switch (msg['type']) {
-            case 'disconnect':
-                this.disconnected(msg as Disconnect);
-                break;
-            case 'error':
-                this.error(msg as Error);
-                break;
+
+        const comment = msg.chat;
+        if((comment===undefined || comment.content === undefined || comment.content === '') ||
+            (comment.yourpost && comment.yourpost === 1)){
+            return;
         }
+
+
+        this.recieveNicoliveMessage(this.makeChunkedMessage(comment));
+        
+
+        // switch (msg['type']) {
+        //     case 'disconnect':
+        //         this.disconnected(msg as Disconnect);
+        //         break;
+        //     case 'error':
+        //         this.error(msg as Error);
+        //         break;
+        // }
     }
 
-    private disconnected(msg: Disconnect) {
-        if (this.socket === null) return;
-        console.log('disconnect: ', msg.data.reason);
-        if (this._onDisconnectMessageServer != null) {
-            this._onDisconnectMessageServer(msg);
-        }
-    }
-    private error(msg: Error) {
-        if (this.socket === null) return;
-        console.log('error: ', msg.body.code);
-        if (this._onErrorMessageServer != null) {
-            this._onErrorMessageServer(msg);
-        }
+    private makeChunkedMessage(comment: any){
+        const msecs = comment.date*1000+Math.floor(comment.date_usec/1000);
+        const iso = new Date(msecs).toISOString();
+        const cmt_chk = fromJson(ChunkedMessageSchema, {
+                message:{
+                       chat:{
+                            content: comment.content,
+                            name: '',//いるんかこれ？
+                            vpos: comment.vpos,
+                            account_status: comment.premium??0,
+                            hashed_user_id: comment.user_id,
+                            modifier: {
+                                position: 0,
+                                size: 0,
+                                named_color: 0,
+                                font: 0,
+                                opacity: 0
+                            }
+                        }
+                },
+            meta:{
+                id: '',
+                at: iso,
+                origin: {
+                    chat: {
+                        live_id: 0
+                    }
+                }
+            }
+        });
+        return cmt_chk;
     }
 
-    public set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null) {
-        this._onRecieveMessageServer = callback;
+    // private disconnected() {
+    //     if (this.socket === null) return;
+    //     // console.log('disconnect: ', msg.data.reason);
+    //     if (this._onDisconnectMessageServer != null) {
+    //         this._onDisconnectMessageServer(msg);
+    //     }
+    // }
+    // private error() {
+    //     if (this.socket === null) return;
+    //     // console.log('error: ', msg.body.code);
+    //     if (this._onErrorMessageServer != null) {
+    //         this._onErrorMessageServer();
+    //     }
+    // }
+
+    public onRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)) {
+        this._onRecieveChunkedMessages.add(callback);
     }
-    set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null) {
-        this._onDisconnectMessageServer = callback;
+    public offRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)) {
+        this._onRecieveChunkedMessages.delete(callback);
     }
-    set onErrortMessageServer(callback: ((msg: Error) => any) | null) {
-        this._onErrorMessageServer = callback;
+    private recieveNicoliveMessage(msg: ChunkedMessage){
+        for(const c of this._onRecieveChunkedMessages){
+            c(msg);
+        }
     }
+    // set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null) {
+    //     this._onDisconnectMessageServer = callback;
+    // }
+    // set onErrortMessageServer(callback: ((msg: Error) => any) | null) {
+    //     this._onErrorMessageServer = callback;
+    // }
 }

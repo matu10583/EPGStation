@@ -26,8 +26,18 @@ export default class NicoliveCommentServerModel implements INicoliveCommentServe
         }
 
         this.clients.add(client);
-        const seg = this.comment_fetcher.getConnectedSegment();
-        if (seg == null) return true;
+        let seg = this.comment_fetcher.getConnectedSegment();
+        let timeElapsed = 0;
+        const retryInterval = 100;
+        while(seg == null){
+            timeElapsed+=retryInterval;
+            if(timeElapsed>this.timeOut){
+                throw new Error('connection timed out');
+            }
+            seg = this.comment_fetcher.getConnectedSegment();
+            await new Promise(resolve=>setTimeout(resolve, retryInterval));
+        }
+        if (seg == null) return false;
         client.emit('connectedNicolive', toBinary(ConnectedSegmentSchema, seg));
         return true;
     }

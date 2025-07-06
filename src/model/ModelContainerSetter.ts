@@ -173,6 +173,8 @@ import NicoliveSegmentServerClient from '../lib/nicolive/NicoliveSegmentServerCl
 import { MessageSegment } from '../lib/proto';
 import INicoJKApiModel from './api/nicojk/INicoJKApiModel';
 import NicoJKApiModel from './api/nicojk/NicoJKApiModel';
+import NXJikkyoCommentFetcher from '../lib/nicolive/NXJikkyoCommentFetcher';
+import NXJikkyoWebSocketClient from '../lib/nicolive/NXJikkyoWebSocketClient';
 
 /**
  * container に 各 Model を登録する
@@ -198,13 +200,21 @@ export const set = (container: Container): void => {
     container.bind<NicoliveCommentServerModelFactory>('NicoliveCommentServerModelFactory').toFactory(context => {
         return (config: NicoliveCommentServerConfig) => {
             const server = context.container.get<INicoliveCommentServerModel>('INicoliveCommentServerModel');
-            const ws_client = new NicoliveWebSocketClient();
             const msg_client = new NicoliveMessageServerClient();
             const seg_factory = context.container.get<NicoliveSegmentServerClientFactory>(
                 'NicoliveSegmentServerClientFactory',
             );
             //TODO: NXJikkyo互換を作るならコメント取得の仕方がだいぶ違いそうなので新しいクラスを作る
-            server.init(new NicoliveCommentFetcher(ws_client, msg_client, seg_factory, config.url));
+            if(config.nx_ws_api != undefined){
+                const comment_session = new NXJikkyoWebSocketClient();
+                const watch_session = new NicoliveWebSocketClient();
+                server.init(new NXJikkyoCommentFetcher(comment_session, watch_session, config.nx_ws_api));
+            }
+            else{
+                const ws_client = new NicoliveWebSocketClient();
+                server.init(new NicoliveCommentFetcher(ws_client, msg_client, seg_factory, config.url));
+            }
+            
             return server;
         };
     });

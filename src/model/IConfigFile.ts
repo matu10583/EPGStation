@@ -44,7 +44,7 @@ export interface NicoliveInfo {
     }[];
     commentLagThreshold: number;
     kakolog_url: string;
-    nxjikkyo_ws_url?:string;
+    fetch_from_nxjikkyo?:boolean;
 }
 
 /**

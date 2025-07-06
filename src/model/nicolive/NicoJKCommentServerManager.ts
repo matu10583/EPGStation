@@ -21,10 +21,15 @@ export default class NicoJKCommentServerManager implements INicoJKCommentServerM
         const jk_urls = config.nicoLive?.jk_url;
 
         for (const entity of jk_urls) {
-            const wss_url = config.nicoLive.nxjikkyo_ws_url?.replace('{{id}}', entity.id);
             this.channel_servers.set(
                 entity.channel.toString(),
-                serverFactory({url: entity.url, wss_url: wss_url})
+                serverFactory({
+                    url: entity.url, 
+                    nx_ws_api: 
+                    (config.nicoLive.fetch_from_nxjikkyo)?
+                        `https://nx-jikkyo.tsukumijima.net/api/v1/channels/${entity.id}/jikkyo`
+                        :undefined
+                })
             );
         }
     }

@@ -1,68 +1,74 @@
 //created by matu10583
 //ニコ生のコメントを取ってくる
-import INicoliveWebSocketClient, { Room } from './INicoliveWebSocketClient';
 import INicoliveCommentFetcher from './INicoliveCommentFetcher';
-import * as cheerio from 'cheerio';
-import INicoliveSegmentServerClient, { NicoliveSegmentServerClientFactory } from './INicoliveSegmentServerClient';
-import type { ChunkedMessage, MessageSegment } from '../proto';
-import INicoliveMessageServerClient from './INicoliveMessageServerClient';
+import type { ChunkedMessage } from '../proto';
 import { ConnectedSegment, ConnectedSegmentSchema } from '../gen/epgstation/nicojk/service/ConnectedSegment_pb';
 import { create } from '@bufbuild/protobuf';
-import { LiveProps } from '../gen/epgstation/nicojk/service/data/LiveProps_pb';
+// import { LiveProps } from '../gen/epgstation/nicojk/service/data/LiveProps_pb';
+import INXJikkyoWebSocketClient from './INXJikkyoWebSocketClient';
+import INicoliveWebSocketClient, { NXJKRoom } from './INicoliveWebSocketClient';
 
 // @injectable()
 export default class NXJikkyoCommentFetcher implements INicoliveCommentFetcher {
-    private ws_client: INicoliveWebSocketClient;
-    private msg_client: INicoliveMessageServerClient;
+    private comment_session: INXJikkyoWebSocketClient;
+    private watch_sessiont: INicoliveWebSocketClient;
     
-    private seg_clients: Array<INicoliveSegmentServerClient> = [];
-    private comment_recieve_callback: Set<(data: ChunkedMessage) => any> = new Set();
-    private ws_url: string;
+    private jikkyo_api: string;
     private connectedSeg: ConnectedSegment | null = null;
     
 
     constructor(
-        _wsclient: INicoliveWebSocketClient,
-        _msgclient: INicoliveMessageServerClient,
+        _comment_session: INXJikkyoWebSocketClient,
+        _watch_session: INicoliveWebSocketClient,
         
-        ws_url: string,
+        jikkyo_api: string,
     ) {
-        this.ws_client = _wsclient;
-        this.ws_url = ws_url;
-        this.msg_client = _msgclient;
-        this.segment_factory = _segFactory;
+        this.watch_sessiont = _watch_session;
+        this.jikkyo_api = jikkyo_api;
+        this.comment_session = _comment_session;
     }
     
 
     connected(): boolean {
-        return this.ws_client.connected();
+        return this.watch_sessiont.connected();
     }
 
     public async connect(): Promise<boolean> {
-        // const props_obj = await this.fetchWSUrl(this.page_url);
-        // if (props_obj == null) {
-        //     console.error('web socket url not found');
-        //     return false;
-        // }
-        const ws_url = this.ws_url
+        const data = await fetch(this.jikkyo_api);
+        if(!data.ok) return false;
+        const connection_info = await data.json();
+        const ws_url = connection_info.watch_session_url;
         if (ws_url == null) return false;
-        this.ws_client.onRecieveMessageServer = msg => this.onRecieveMessageServer(msg);
-        this.ws_client.onDisconnectMessageServer = () => this.onDisconnectMessageServer();
-        this.ws_client.onErrortMessageServer = msg => {
-            this.disconnect();
-            throw new Error(`nicolive connection error: ${msg.body.code}`);
-        };
-        await this.ws_client.connect(ws_url);
 
-        // this.connectedSeg = create(ConnectedSegmentSchema, {
-        //     props: props_obj,
-        // });
+
+        this.watch_sessiont.onRecieveRoom = async (msg)=>{
+           this.connectCommentSession(msg, connection_info.comment_session_url);
+        }
+        this.watch_sessiont.onDisconnectMessageServer = this.onDisconnectMessageServer;
+        this.watch_sessiont.onErrortMessageServer = this.onDisconnectMessageServer;
+        await this.watch_sessiont.connect(ws_url);
+
         return true;
     }
 
-    private async onRecieveMessageServer(msg: Room) {
-
+    private async connectCommentSession(msg: NXJKRoom, url: string){
+        await this.comment_session.connect(url, msg.data.threadId, msg.data.yourPostKey);
+        const date = new Date(msg.data.vposBaseTime)
+        this.connectedSeg = create(ConnectedSegmentSchema, {
+            props: {
+                site: {
+                    relive: {
+                        webSocketUrl: url
+                    }
+                },
+                program: {
+                    vposBaseTime: Math.floor(date.getTime()/1000),
+                    watchPageUrl: '',
+                }
+            }
+        });
     }
+
 
     private async onDisconnectMessageServer() {
         let tryCount = 0;
@@ -84,12 +90,9 @@ export default class NXJikkyoCommentFetcher implements INicoliveCommentFetcher {
 
 
     public disconnect(): void {
-        for (const c of this.seg_clients) {
-            c.disconnect();
-        }
-        this.seg_clients.length = 0;
-        this.msg_client.disconnect();
-        this.ws_client.disconnect(1000, 'Normal Closure');
+        
+        this.comment_session.disconnect();
+        this.watch_sessiont.disconnect(1000, 'Normal Closure');
         this.connectedSeg = null;
     }
 
@@ -105,35 +108,11 @@ export default class NXJikkyoCommentFetcher implements INicoliveCommentFetcher {
 
     public onRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any) {
         //コメント取得時のコールバック
-        this.comment_recieve_callback.add(callback);
+        this.comment_session.onRecieveNicoliveMessage(callback);
     }
     public offRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any) {
         //コメント取得時のコールバック
-        this.comment_recieve_callback.delete(callback);
-    }
-    private onRecieveSegmentMessage(msg: ChunkedMessage) {
-        for (const c of this.comment_recieve_callback) {
-            c(msg);
-        }
+        this.comment_session.offRecieveNicoliveMessage(callback);
     }
 
-    // private async fetchWSUrl(url: string): Promise<LiveProps | null> {
-    //     const html = await fetch(url, { method: 'GET' }).then(async response => {
-    //         return await response.text();
-    //     });
-    //     const $ = cheerio.load(html);
-
-    //     const script = $('script[data-props]');
-    //     if (!script) {
-    //         console.error('No data-props');
-    //         return null;
-    //     }
-    //     const props = script.attr('data-props');
-    //     if (!props) {
-    //         console.error('No data-props');
-    //         return null;
-    //     }
-    //     const props_obj = JSON.parse(props) as LiveProps;
-    //     return props_obj;
-    // }
 }

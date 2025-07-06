@@ -1,10 +1,12 @@
+import { ChunkedMessage } from "../proto";
 
 export default interface INXJikkyoWebSocketClient {
-    connect(url: string): void;
+    connect(url: string, thread: string, threadkey: string): void;
     disconnect(code?: number, reason?: string): void;
     connected(): boolean;
-    set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null);
+    onRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)):void;
+    offRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)):void;
 
-    set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null);
-    set onErrortMessageServer(callback: ((msg: Error) => any) | null);
+    // set onDisconnectMessageServer(callback: ((msg: Disconnect) => any) | null);
+    // set onErrortMessageServer(callback: ((msg: Error) => any) | null);
 }

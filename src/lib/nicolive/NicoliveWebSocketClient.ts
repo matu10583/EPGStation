@@ -1,6 +1,6 @@
 import NicoliveWebSocket from './NicoliveWebSocket';
 import INicoliveWebSocket from './INicoliveWebSocket';
-import INicoliveWebSocketClient, { MessageServer, MsgBase, Disconnect, Error } from './INicoliveWebSocketClient';
+import INicoliveWebSocketClient, { MessageServer, MsgBase, Disconnect, Error, NXJKRoom } from './INicoliveWebSocketClient';
 import { injectable } from 'inversify';
 //終了時とかなんも考えてないからそのうち実装
 interface Seat extends MsgBase {
@@ -9,24 +9,20 @@ interface Seat extends MsgBase {
     };
 }
 
-//NXJikkyo 互換
-interface NXJKRoom extends MsgBase{
-    data:{
-        messageServer:{
-            uri: string
-        }
-        vposBaseTime: string
-    }
-};
+
 
 @injectable()
 export default class NicoliveWebSocketClient implements INicoliveWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
     private _onRecieveMessageServer: ((msg: MessageServer) => any) | null = null;
+    private _onRecieveRoom: ((room: NXJKRoom) => any) | null = null;
     private _onDisconnectMessageServer: ((msg: Disconnect) => any) | null = null;
     private _onErrorMessageServer: ((msg: Error) => any) | null = null;
     private interval_id: NodeJS.Timer | null = null;
     constructor() {}
+    set onRecieveRoom(callback: ((msg: NXJKRoom) => any) | null) {
+        this._onRecieveRoom = callback;
+    }
 
     connected(): boolean {
         const connected = this.socket?.connected();
@@ -136,12 +132,9 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
         }
     }
     private processNXRoom(msg: NXJKRoom){
-        this.processMessageServer({
-            data:{
-                viewUri: msg.data.messageServer.uri,
-                vposBaseTime: msg.data.vposBaseTime
-            }
-        }as MessageServer);
+        if(this._onRecieveRoom != null){
+            this._onRecieveRoom(msg);
+        }
     }
     public set onRecieveMessageServer(callback: ((msg: MessageServer) => any) | null) {
         this._onRecieveMessageServer = callback;
