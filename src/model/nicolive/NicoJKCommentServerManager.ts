@@ -24,12 +24,11 @@ export default class NicoJKCommentServerManager implements INicoJKCommentServerM
             this.channel_servers.set(
                 entity.channel.toString(),
                 serverFactory({
-                    url: entity.url, 
-                    nx_ws_api: 
-                    (config.nicoLive.fetch_from_nxjikkyo)?
-                        `https://nx-jikkyo.tsukumijima.net/api/v1/channels/${entity.id}/jikkyo`
-                        :undefined
-                })
+                    url: entity.url,
+                    nx_ws_api: config.nicoLive.fetch_from_nxjikkyo
+                        ? `https://nx-jikkyo.tsukumijima.net/api/v1/channels/${entity.id}/jikkyo`
+                        : undefined,
+                }),
             );
         }
     }

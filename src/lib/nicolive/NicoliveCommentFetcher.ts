@@ -19,7 +19,6 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
     private comment_recieve_callback: Set<(data: ChunkedMessage) => any> = new Set();
     private page_url: string;
     private connectedSeg: ConnectedSegment | null = null;
-    
 
     constructor(
         _wsclient: INicoliveWebSocketClient,
@@ -32,7 +31,6 @@ export default class NicoliveCommentFetcher implements INicoliveCommentFetcher {
         this.msg_client = _msgclient;
         this.segment_factory = _segFactory;
     }
-    
 
     connected(): boolean {
         return this.ws_client.connected();

@@ -10,7 +10,7 @@ import { ChunkedMessage, ChunkedMessageSchema } from '../proto';
 @injectable()
 export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient {
     private socket: INicoliveWebSocket | null = null;
-    private _onRecieveChunkedMessages: Set<((msg: ChunkedMessage) => any)> = new Set();
+    private _onRecieveChunkedMessages: Set<(msg: ChunkedMessage) => any> = new Set();
     // private _onDisconnectMessageServer: (() => any) | null = null;
     // private _onErrorMessageServer: (() => any) | null = null;
     constructor() {}
@@ -49,51 +49,51 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
         if (this.socket === null) return;
         this.socket.close(code, reason);
         this.socket = null;
-
     }
 
     private sendWelcome(thread: string, threadkey: string) {
         if (this.socket === null) return;
-        const welcome_msg =
-            JSON.stringify([
-                {ping: {content: 'rs:0'}},
-                {ping: {content: 'ps:0'}},
-                {
-                    thread:{
-                        version: `20061206`,
-                        thread: thread,
-                        threadkey: threadkey,
-                        user_id: '',
-                        res_from: -100
-                    }
-                }
-            ]);
+        const welcome_msg = JSON.stringify([
+            { ping: { content: 'rs:0' } },
+            { ping: { content: 'ps:0' } },
+            {
+                thread: {
+                    version: `20061206`,
+                    thread: thread,
+                    threadkey: threadkey,
+                    user_id: '',
+                    res_from: -100,
+                },
+            },
+        ]);
 
         this.socket.send(welcome_msg);
     }
 
     private processMessage(msg: any) {
-        if(msg.thread !== undefined){
-            if(msg.thread.resultcode !== 0){
-                console.error('Connection Failed')
+        if (msg.thread !== undefined) {
+            if (msg.thread.resultcode !== 0) {
+                console.error('Connection Failed');
                 return;
             }
         }
 
-        if(msg.ping !== undefined && msg.ping.content === 'rf:0'){
+        if (msg.ping !== undefined && msg.ping.content === 'rf:0') {
             //過去コメントが一気に流れてそれがここで終わるらしい
             return;
         }
 
         const comment = msg.chat;
-        if((comment===undefined || comment.content === undefined || comment.content === '') ||
-            (comment.yourpost && comment.yourpost === 1)){
+        if (
+            comment === undefined ||
+            comment.content === undefined ||
+            comment.content === '' ||
+            (comment.yourpost && comment.yourpost === 1)
+        ) {
             return;
         }
 
-
         this.recieveNicoliveMessage(this.makeChunkedMessage(comment));
-        
 
         // switch (msg['type']) {
         //     case 'disconnect':
@@ -105,35 +105,35 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
         // }
     }
 
-    private makeChunkedMessage(comment: any){
-        const msecs = comment.date*1000+Math.floor(comment.date_usec/1000);
+    private makeChunkedMessage(comment: any) {
+        const msecs = comment.date * 1000 + Math.floor(comment.date_usec / 1000);
         const iso = new Date(msecs).toISOString();
         const cmt_chk = fromJson(ChunkedMessageSchema, {
-                message:{
-                       chat:{
-                            content: comment.content,
-                            name: '',//いるんかこれ？
-                            vpos: comment.vpos,
-                            account_status: comment.premium??0,
-                            hashed_user_id: comment.user_id,
-                            modifier: {
-                                position: 0,
-                                size: 0,
-                                named_color: 0,
-                                font: 0,
-                                opacity: 0
-                            }
-                        }
+            message: {
+                chat: {
+                    content: comment.content,
+                    name: '', //いるんかこれ？
+                    vpos: comment.vpos,
+                    account_status: comment.premium ?? 0,
+                    hashed_user_id: comment.user_id,
+                    modifier: {
+                        position: 0,
+                        size: 0,
+                        named_color: 0,
+                        font: 0,
+                        opacity: 0,
+                    },
                 },
-            meta:{
+            },
+            meta: {
                 id: '',
                 at: iso,
                 origin: {
                     chat: {
-                        live_id: 0
-                    }
-                }
-            }
+                        live_id: 0,
+                    },
+                },
+            },
         });
         return cmt_chk;
     }
@@ -153,14 +153,14 @@ export default class NXJikkyoWebSocketClient implements INXJikkyoWebSocketClient
     //     }
     // }
 
-    public onRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)) {
+    public onRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any) {
         this._onRecieveChunkedMessages.add(callback);
     }
-    public offRecieveNicoliveMessage(callback: ((msg: ChunkedMessage) => any)) {
+    public offRecieveNicoliveMessage(callback: (msg: ChunkedMessage) => any) {
         this._onRecieveChunkedMessages.delete(callback);
     }
-    private recieveNicoliveMessage(msg: ChunkedMessage){
-        for(const c of this._onRecieveChunkedMessages){
+    private recieveNicoliveMessage(msg: ChunkedMessage) {
+        for (const c of this._onRecieveChunkedMessages) {
             c(msg);
         }
     }

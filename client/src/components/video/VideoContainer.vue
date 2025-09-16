@@ -44,6 +44,15 @@
                                 <v-icon dark>mdi-minus-circle</v-icon>
                             </v-btn>
                         </div>
+                        <div v-if="this.isEnableComment === true && duration > 0" class="d-flex flex-column align-center right-buttons" v-on:click="stopPropagation">
+                            <v-btn class="add-shadow" icon dark v-on:click="commentLagUp">
+                                <v-icon dark>mdi-plus-circle</v-icon>
+                            </v-btn>
+                            <v-btn class="add-shadow my-2" text dark v-on:click="resetCommentLag">{{ commentLag.toFixed(1) }}s</v-btn>
+                            <v-btn class="add-shadow" icon dark v-on:click="commentLagDown">
+                                <v-icon dark>mdi-minus-circle</v-icon>
+                            </v-btn>
+                        </div>
                         <div class="video-control">
                             <div class="content" v-on:click="stopPropagation">
                                 <v-slider
@@ -253,6 +262,7 @@ export default class VideoContainer extends Vue {
     public currentTimeStr: string = '--:--';
     public durationStr: string = '--:--';
     public playbackRate: number = 1.0;
+    public commentLag: number = 0.0; // コメントの表示遅延時間 (秒)
 
     //コメント表示
     public isEnableComment: boolean = false;
@@ -647,6 +657,14 @@ export default class VideoContainer extends Vue {
         this.playbackRate = (this.$refs.video as BaseVideo).getPlaybackRate();
     }
 
+    public onChangeCommentLag(): void {
+        if (typeof this.$refs.video === 'undefined') {
+            return;
+        }
+
+        this.commentLag = (this.$refs.video as BaseVideo).getCommentLag();
+    }
+
     // 音量変更
     public onVolumechange(): void {
         if (typeof this.$refs.video === 'undefined') {
@@ -742,6 +760,27 @@ export default class VideoContainer extends Vue {
         }
 
         (this.$refs.video as BaseVideo).setPlaybackRate(rate);
+    }
+
+    public commentLagUp(): void {
+        this.changeCommentLag(this.commentLag + 0.5);
+    }
+
+    public commentLagDown(): void {
+        this.changeCommentLag(this.commentLag - 0.5);
+    }
+
+    public resetCommentLag(): void {
+        this.changeCommentLag(0.0);
+    }
+
+    public changeCommentLag(lag: number): void {
+        if (typeof this.$refs.video === 'undefined') {
+            return;
+        }
+
+        (this.$refs.video as BaseVideo).setCommentLag(lag);
+        this.onChangeCommentLag();
     }
 
     /**
@@ -1024,6 +1063,13 @@ export default class VideoContainer extends Vue {
             transform: translateY(-50%)
             opacity: 0.8
 
+        .right-buttons
+            position: absolute
+            left: 6px
+            top: 50%
+            transform: translateY(-50%)
+            opacity: 0.8
+
         .video-control
             height: 60px
             position: absolute
@@ -1052,6 +1098,9 @@ export default class VideoContainer extends Vue {
 
         @media screen and (max-width: 420px)
             .left-buttons
+                display: none !important
+
+            .right-buttons
                 display: none !important
 
             .video-control

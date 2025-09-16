@@ -11,6 +11,7 @@ export default class CommentSender implements ICommentSender {
     recvCommentCallbacks: Set<(cmt: apid.NicoJKCommentItem) => any> = new Set();
     nicoJKApiModel: INicoJKApiModel;
     currentIdx: number = 0;
+    commentLag: number = 0; // コメントの表示遅延時間 (秒)
 
     constructor(@inject('INicoJKApiModel') nicoJKApiModel: INicoJKApiModel) {
         this.nicoJKApiModel = nicoJKApiModel;
@@ -61,13 +62,17 @@ export default class CommentSender implements ICommentSender {
         this.recvCommentCallbacks.delete(callback);
     }
 
+    private calcVposWithLag(vpos: number): number {
+        return vpos + this.commentLag * 1000;
+    }
+
     update = () => {
         if (this.comments == null || this.video == null) return;
         if (this.currentIdx >= this.comments.comments.length) return;
 
         let nextComment = this.comments.comments[this.currentIdx];
 
-        while (nextComment.vpos < this.video.getCurrentTimeMS()) {
+        while (this.calcVposWithLag(nextComment.vpos) < this.video.getCurrentTimeMS()) {
             this.recvCommentCallbacks.forEach(c => {
                 c(nextComment);
             });
@@ -82,9 +87,9 @@ export default class CommentSender implements ICommentSender {
         if (this.comments == null || this.video == null) return;
         const nextCmt = this.comments.comments[this.currentIdx];
         let newIdx: number | null = null;
-        if (nextCmt.vpos > this.video.getCurrentTimeMS()) {
+        if (this.calcVposWithLag(nextCmt.vpos) > this.video.getCurrentTimeMS()) {
             newIdx = this.searchCurrentIdx(0, this.currentIdx);
-        } else if (nextCmt.vpos < this.video.getCurrentTimeMS()) {
+        } else if (this.calcVposWithLag(nextCmt.vpos) < this.video.getCurrentTimeMS()) {
             newIdx = this.searchCurrentIdx(this.currentIdx);
         } else {
             newIdx = this.currentIdx;
@@ -105,16 +110,16 @@ export default class CommentSender implements ICommentSender {
         }
 
         const ctime = this.video.getCurrentTimeMS();
-        if (ctime <= this.comments.comments[0].vpos) {
+        if (ctime <= this.calcVposWithLag(this.comments.comments[0].vpos)) {
             return 0;
-        } else if (ctime >= this.comments.comments[this.comments.comments.length - 1].vpos) {
+        } else if (ctime >= this.calcVposWithLag(this.comments.comments[this.comments.comments.length - 1].vpos)) {
             return this.comments.comments.length;
         }
         let result = 0;
         while (true) {
             const center = Math.floor((start + end) * 0.5);
             const ccmt = this.comments.comments[center];
-            if (ccmt.vpos >= ctime) {
+            if (this.calcVposWithLag(ccmt.vpos) >= ctime) {
                 end = center;
             } else {
                 start = center;
@@ -125,5 +130,13 @@ export default class CommentSender implements ICommentSender {
             }
         }
         return result;
+    }
+
+    public setCommentLag(lag: number): void {
+        this.commentLag = lag;
+        this.seeked();
+    }
+    public getCommentLag(): number {
+        return this.commentLag;
     }
 }

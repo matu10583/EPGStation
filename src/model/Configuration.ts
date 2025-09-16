@@ -268,7 +268,7 @@ namespace Configuration {
         nicoLive: {
             commentLagThreshold: 30,
             jk_url: [],
-            kakolog_url: "",
+            kakolog_url: '',
         },
     };
 }

@@ -8,13 +8,13 @@ export interface MessageServer extends MsgBase {
     };
 }
 
-export interface Room extends MsgBase{
+export interface Room extends MsgBase {
     data: {
-        messageServer:{
-            uri: string
-        },
-        vposBaseTime: string
-    }
+        messageServer: {
+            uri: string;
+        };
+        vposBaseTime: string;
+    };
 }
 
 export interface Disconnect extends MsgBase {
@@ -29,16 +29,16 @@ export interface Error extends MsgBase {
 }
 
 //NXJikkyo 互換
-export interface NXJKRoom extends MsgBase{
-    data:{
-        messageServer:{
-            uri: string
-        }
-        threadId: string
-        yourPostKey: string
-        vposBaseTime: string
-    }
-};
+export interface NXJKRoom extends MsgBase {
+    data: {
+        messageServer: {
+            uri: string;
+        };
+        threadId: string;
+        yourPostKey: string;
+        vposBaseTime: string;
+    };
+}
 export default interface INicoliveWebSocketClient {
     connect(url: string): void;
     disconnect(code?: number, reason?: string): void;

@@ -205,16 +205,15 @@ export const set = (container: Container): void => {
                 'NicoliveSegmentServerClientFactory',
             );
             //TODO: NXJikkyo互換を作るならコメント取得の仕方がだいぶ違いそうなので新しいクラスを作る
-            if(config.nx_ws_api != undefined){
+            if (config.nx_ws_api != undefined) {
                 const comment_session = new NXJikkyoWebSocketClient();
                 const watch_session = new NicoliveWebSocketClient();
                 server.init(new NXJikkyoCommentFetcher(comment_session, watch_session, config.nx_ws_api));
-            }
-            else{
+            } else {
                 const ws_client = new NicoliveWebSocketClient();
                 server.init(new NicoliveCommentFetcher(ws_client, msg_client, seg_factory, config.url));
             }
-            
+
             return server;
         };
     });

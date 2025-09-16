@@ -1,5 +1,8 @@
 <template>
-    <video ref="video" autoplay playsinline></video>
+    <div style="position: relative; width: 100%; height: 100%">
+        <video ref="video" autoplay playsinline style="width: 100%; height: 100%; display: block"></video>
+        <canvas ref="commentCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none"></canvas>
+    </div>
 </template>
 
 <script lang="ts">

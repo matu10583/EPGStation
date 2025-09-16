@@ -1,6 +1,12 @@
 import NicoliveWebSocket from './NicoliveWebSocket';
 import INicoliveWebSocket from './INicoliveWebSocket';
-import INicoliveWebSocketClient, { MessageServer, MsgBase, Disconnect, Error, NXJKRoom } from './INicoliveWebSocketClient';
+import INicoliveWebSocketClient, {
+    MessageServer,
+    MsgBase,
+    Disconnect,
+    Error,
+    NXJKRoom,
+} from './INicoliveWebSocketClient';
 import { injectable } from 'inversify';
 //終了時とかなんも考えてないからそのうち実装
 interface Seat extends MsgBase {
@@ -8,8 +14,6 @@ interface Seat extends MsgBase {
         keepIntervalSec: number;
     };
 }
-
-
 
 @injectable()
 export default class NicoliveWebSocketClient implements INicoliveWebSocketClient {
@@ -131,8 +135,8 @@ export default class NicoliveWebSocketClient implements INicoliveWebSocketClient
             this._onRecieveMessageServer(msg);
         }
     }
-    private processNXRoom(msg: NXJKRoom){
-        if(this._onRecieveRoom != null){
+    private processNXRoom(msg: NXJKRoom) {
+        if (this._onRecieveRoom != null) {
             this._onRecieveRoom(msg);
         }
     }
