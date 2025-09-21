@@ -17,6 +17,7 @@ export interface RecordedDisplayData {
         drop?: string;
         dropSimple?: string;
         hasDrop: boolean;
+        lastPlayPosition: number | null;
     };
     recordedItem: apid.RecordedItem;
     isSelected: boolean;

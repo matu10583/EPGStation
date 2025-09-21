@@ -16,6 +16,10 @@
             </div>
             <div class="text caption font-weight-light">{{ item.display.channelName }}</div>
             <div class="text caption font-weight-light">{{ item.display.time }} ({{ item.display.duration }} m)</div>
+            <div v-if="item.display.lastPlayPosition !== null && item.display.lastPlayPosition >= 0" 
+                class="text caption font-weight-light play-position">
+                視聴済み: {{ formatTime(item.display.lastPlayPosition) }}
+            </div>
             <div
                 v-if="isShowDropInfo === true && typeof item.display.drop !== 'undefined'"
                 class="text caption font-weight-light"
@@ -70,6 +74,15 @@ export default class RecordedLargeCard extends Vue {
     public stopEncode(recordedId: apid.RecordedId): void {
         this.$emit('stopEncode', recordedId);
     }
+
+    public formatTime(sec: number): string {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        return (h==0?[m, s]:[h,m,s])
+            .map(v => v < 10 ? '0' + v : v)
+            .join(':');
+    }
 }
 </script>
 
@@ -87,4 +100,13 @@ export default class RecordedLargeCard extends Vue {
 
     .dummy
         visibility: hidden
+    .play-position
+        color: #fff
+        background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)
+        font-weight: bold
+        border-radius: 8px
+        padding: 4px 12px
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2)
+        letter-spacing: 1px
+        font-size: 1.1em
 </style>

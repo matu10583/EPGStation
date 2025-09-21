@@ -35,6 +35,7 @@ export default class RecordedUtil implements IRecordedUtil {
                 thumbnails: item.thumbnails,
                 videoFiles: item.videoFiles,
                 hasDrop: false,
+                lastPlayPosition: item.lastPlayTime,
             },
             recordedItem: item,
             isSelected: false,
