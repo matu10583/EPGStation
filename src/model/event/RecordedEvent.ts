@@ -74,6 +74,15 @@ class RecordedEvent implements IRecordedEvent {
     }
 
     /**
+     * 再生時間を変更イベント発行
+     * @param recordedId: apid.RecordedId
+     * @param playTime: number|null
+     */
+    public emitChangeLastPlayTime(recordedId: apid.RecordedId, playTime: number | null): void {
+        this.emitter.emit(RecordedEvent.CHANGE_PROTECT, recordedId, playTime);
+    }
+
+    /**
      * 録画削除イベント登録
      * @param callback: (recorded: Recorded) => void
      */

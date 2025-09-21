@@ -13,6 +13,7 @@ import IRecordedStreamingVideoState from '@/model/state/recorded/streaming/IReco
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import * as apid from '../../../../api';
 import ICommentSender from '@/model/comment/ICommentSender';
+import IRecordedApiModel from '@/model/api/recorded/IRecordedApiModel';
 
 interface VideoSrcInfo {
     videoFileId: apid.VideoFileId;
@@ -57,6 +58,7 @@ export default class RecordedStreamingVideo extends BaseVideo {
         await this.videoState.clear();
         await this.updateVideoInfo();
 
+        this.setIntervalPlayPosition();
         super.mounted();
 
         // 録画中の場合は duration が変化するので定期的に timeupdate を発行する
@@ -70,6 +72,15 @@ export default class RecordedStreamingVideo extends BaseVideo {
                 }
             }, 1000);
         }
+        const playStartPosition = await this.getPlaybackPosition(this.recordedId);
+        this.setCurrentTime(playStartPosition);
+        await this.play();
+    }
+
+    protected onPause(): void {
+        // APIへ再生位置保存
+        this.savePlaybackPosition(this.getCurrentTime());
+        super.onPause();
     }
 
     /**
@@ -88,6 +99,8 @@ export default class RecordedStreamingVideo extends BaseVideo {
         // socket.io イベント
         this.socketIoModel.offUpdateState(this.onUpdateStatusCallback);
 
+        this.removeIntervalPlayPosition();
+        this.savePlaybackPosition(this.getCurrentTime());
         super.beforeDestroy();
     }
 

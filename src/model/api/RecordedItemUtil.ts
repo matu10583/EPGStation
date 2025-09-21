@@ -26,6 +26,7 @@ export default class RecordedItemUtil implements IRecordedItemUtil {
             isRecording: recorded.isRecording,
             isEncoding: typeof encodeIndex[recorded.id] !== 'undefined',
             isProtected: recorded.isProtected,
+            lastPlayTime: recorded.lastPlayTime,
         };
 
         if (recorded.ruleId !== null) {

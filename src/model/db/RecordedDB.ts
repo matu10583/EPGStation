@@ -184,6 +184,36 @@ export default class RecordedDB implements IRecordedDB {
     }
 
     /**
+     * 視聴時間を変更する
+     * @param recordedId: apid.RecordedId
+     * @param playTime: number
+     * @return Promise<void>
+     */
+    public async changeLastPlayTime(recordedId: apid.RecordedId, playTime: number | null): Promise<void> {
+        const recorded = await this.findId(recordedId);
+        if (recorded === null) {
+            throw new Error('RecordedIsNull');
+        }
+
+        // すでに同じ状態であれば何もしない
+        if (recorded.lastPlayTime === playTime) {
+            return;
+        }
+
+        const connection = await this.op.getConnection();
+        const queryBuilder = connection
+            .createQueryBuilder()
+            .update(Recorded)
+            .set({
+                lastPlayTime: playTime,
+            })
+            .where({ id: recordedId });
+        await this.promieRetry.run(() => {
+            return queryBuilder.execute();
+        });
+    }
+
+    /**
      * 指定した録画番組情報を 1 件削除
      * @param recordedId: apid.RecordedId
      * @return Promise<void>

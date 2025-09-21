@@ -21,6 +21,7 @@ import Storages from './views/Storages.vue';
 import WatchOnAir from './views/WatchOnAir.vue';
 import WatchRecorded from './views/WatchRecorded.vue';
 import WatchRecordedStreaming from './views/WatchRecordedStreaming.vue';
+import RecordedFile from './views/RecordedFile.vue';
 
 Vue.use(Router);
 

@@ -85,10 +85,19 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
 
             // ストリームが有効になるまで待つ
             await this.waitForEnabled();
+            this.setIntervalPlayPosition();
             super.mounted();
+            const playStartPosition = await this.getPlaybackPosition(this.recordedId);
+            this.setCurrentTime(playStartPosition);
+            await this.play();
         });
     }
 
+    protected onPause(): void {
+        // APIへ再生位置保存
+        this.savePlaybackPosition(this.getCurrentTime());
+        super.onPause();
+    }
     /**
      * ストリームが有効化になるまで待つ
      * @return Promise<void>
@@ -136,6 +145,8 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
                 text: 'ストリーム停止に失敗',
             });
         });
+        this.removeIntervalPlayPosition();
+        this.savePlaybackPosition(this.getCurrentTime());
     }
 
     /**

@@ -380,6 +380,11 @@ export interface RecordedItem {
     tags?: RecordedTag[];
     isEncoding: boolean;
     isProtected: boolean;
+    lastPlayTime: number | null; // 最後に再生した時間 (秒)
+}
+
+export interface RecordedPlayState{
+    lastPlayedPosition: number; // 最後に再生した時間 (秒)
 }
 
 /**

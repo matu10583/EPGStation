@@ -297,6 +297,16 @@ export default class IPCClient implements IIPCClient {
                     },
                 });
             },
+            changeLastPlayTime: (recordedId: apid.RecordedId, playTime: number | null) => {
+                return this.send({
+                    model: ModelName.recorded,
+                    func: RecordedFunctions.changeLastPlayTime,
+                    args: {
+                        recordedId: recordedId,
+                        playTime: playTime,
+                    },
+                });
+            },
             videoFileCleanup: () => {
                 return this.send(
                     {

@@ -8,6 +8,7 @@ export default interface IRecordedApiModel {
     stopEncode(recordedId: apid.RecordedId): Promise<void>;
     protect(recordedId: apid.RecordedId): Promise<void>;
     unprotect(recordedId: apid.RecordedId): Promise<void>;
+    updateLastPlayPosition(recordedId: apid.RecordedId, position: number): Promise<void>;
     createNewRecorded(option: apid.CreateNewRecordedOption): Promise<apid.RecordedId>;
     cleanup(): Promise<void>;
 }

@@ -494,6 +494,19 @@ export default class RecordedManageModel implements IRecordedManageModel {
     }
 
     /**
+     * 再生時間記録を変更する
+     * @param recordedId: apid.RecordedId
+     * @param isProtect: boolean
+     * @return Promise<void>
+     */
+    public async changeLastPlayTime(recordedId: apid.RecordedId, playTime: number | null): Promise<void> {
+        this.log.system.info('set playtime' + `: ${playTime}`);
+
+        await this.recordedDB.changeLastPlayTime(recordedId, playTime);
+        this.recordedEvent.emitChangeLastPlayTime(recordedId, playTime);
+    }
+
+    /**
      * RecordedHistory の保存期間外のデータを削除する
      * @return Promise<void>
      */

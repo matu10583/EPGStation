@@ -6,6 +6,7 @@ import CommentRenderer from '@/model/comment/CommentRenderer';
 import container from '@/model/ModelContainer';
 import ICommentRenderer from '@/model/comment/ICommentRenderer';
 import IServerConfigModel from '@/model/serverConfig/IServerConfigModel';
+import IRecordedApiModel from '@/model/api/recorded/IRecordedApiModel';
 type NicoJKChunkedMessage = proto.dwango.nicolive.chat.service.edge.ChunkedMessage;
 type NicoJKConnectedSegment = proto.epgstation.nicojk.service.ConnectedSegment;
 
@@ -30,6 +31,9 @@ export default abstract class BaseVide extends Vue {
     private framePerSeconds: number = 30;
     private lastTime: number = 0;
     private updateFrameId: number = 0;
+    private updatePlayPositionId: number = 0;
+    private updatePlayPositionInterval: number = 10; //秒
+    private recordedAPIModel = container.get<IRecordedApiModel>('IRecordedApiModel');
 
     private config: IServerConfigModel = container.get<IServerConfigModel>('IServerConfigModel');
     public getSrcVideo() {
@@ -123,6 +127,30 @@ export default abstract class BaseVide extends Vue {
             return;
         }
         this.video.src = src;
+    }
+
+    protected async getPlaybackPosition(recordedId: number): Promise<number> {
+        const data = await this.recordedAPIModel.get(recordedId, true);
+        return data.lastPlayTime ?? 0;
+    }
+
+    protected setIntervalPlayPosition(): void {
+        this.updatePlayPositionId = window.setInterval(() => {
+            if (this.video && !this.video.paused) {
+                this.savePlaybackPosition(this.video.currentTime);
+            }
+        }, this.updatePlayPositionInterval * 1000);
+    }
+
+    protected async savePlaybackPosition(position: number): Promise<void> {
+        await this.recordedAPIModel.updateLastPlayPosition((this.$props as any).recordedId, Math.floor(position));
+    }
+
+    protected removeIntervalPlayPosition(): void {
+        if (this.updatePlayPositionId) {
+            clearInterval(this.updatePlayPositionId);
+            this.updatePlayPositionId = 0;
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ export default interface IRecordedEvent {
     emitAddUploadedVideoFile(newVideoFileId: apid.VideoFileId, needsCreateThumbnail: boolean): void;
     emitDeleteVideoFile(videoFileId: apid.VideoFileId): void;
     emitChangeProtect(recordedId: apid.RecordedId, isProtected: boolean): void;
+    emitChangeLastPlayTime(recordedId: apid.RecordedId, playTime: number | null): void;
     setDeleteRecorded(callback: (recorded: Recorded) => void): void;
     setCreateNewRecorded(callback: (recordedId: apid.RecordedId) => void): void;
     setUpdateVideoFileSize(callback: (videoFileId: apid.VideoFileId) => void): void;

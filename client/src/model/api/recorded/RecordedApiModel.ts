@@ -87,6 +87,19 @@ export default class RecordedApiModel implements IRecordedApiModel {
     }
 
     /**
+     * 最終再生位置の更新
+     * @param recordedId: apid.RecordedId
+     * @param position: number 最終再生位置（秒）
+     * @return Promise<void>
+     */
+    public async updateLastPlayPosition(recordedId: apid.RecordedId, position: number): Promise<void> {
+        const result = await this.repository.put(`/recorded/${recordedId}/playtime`, {
+            lastPlayedPosition: position,
+        });
+        return result.data;
+    }
+
+    /**
      * 録画番組情報を新規作成
      * @param option: apid.CreateNewRecordedOption
      * @return Promise<apid.RecordedId>

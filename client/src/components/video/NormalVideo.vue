@@ -21,13 +21,25 @@ export default class NormalVideo extends BaseVideo {
     @Prop({ required: true })
     recordedId!: apid.RecordedId | null;
 
-    public mounted(): void {
+    public async mounted(): Promise<void> {
+        this.setIntervalPlayPosition();
+        console.log(this.recordedId);
         super.mounted();
+        if (this.recordedId != null) {
+            const position = await this.getPlaybackPosition(this.recordedId);
+            this.setCurrentTime(position);
+        }
     }
 
     public async beforeDestroy(): Promise<void> {
         this.commentSender.resetSrc();
+        this.removeIntervalPlayPosition();
         super.beforeDestroy();
+    }
+
+    protected onPause(): void {
+        this.savePlaybackPosition(this.getCurrentTime());
+        super.onPause();
     }
 
     public isEnableComment(): boolean {

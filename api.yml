@@ -1135,6 +1135,16 @@ components:
                 recordedId:
                     $ref: '#/components/schemas/RecordedId'
 
+        RecordedPlayState:
+              description: 録画再生状態
+              type: object
+              required:
+                  - lastPlayedPosition
+              properties:
+                  lastPlayedPosition:
+                      description: 最後に再生した位置 (秒)
+                      type: integer
+
         VideoFile:
             description: ビデオファイル情報
             type: object
@@ -1900,3 +1910,10 @@ components:
                 type: integer
                 default: 3
 
+        LastPlayedPosition:
+            description: 最後に再生した再生時間 (秒)
+            in: query
+            name: lastPlayedPosition
+            required: true
+            schema:
+                type: integer

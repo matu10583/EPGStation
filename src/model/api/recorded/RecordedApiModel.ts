@@ -111,6 +111,16 @@ export default class RecordedApiModel implements IRecordedApiModel {
     }
 
     /**
+     * 最終再生時間を変更する
+     * @param recordedId: apid.RecordedId
+     * @param isProtect: boolean
+     * @return Promise<void>
+     */
+    public changeLastPlayTime(recordedId: apid.RecordedId, playTime: number | null): Promise<void> {
+        return this.ipc.recorded.changeLastPlayTime(recordedId, playTime);
+    }
+
+    /**
      * ファイルのクリーンアップ
      */
     public async fileCleanup(): Promise<void> {

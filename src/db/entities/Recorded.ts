@@ -207,4 +207,11 @@ export default class Recorded extends BaseEntity {
     @ManyToMany(() => RecordedTag)
     @JoinTable()
     public tags!: RecordedTag[];
+
+    @Column({
+        type: 'integer',
+        nullable: true,
+        unsigned: true,
+    })
+    public lastPlayTime!: number | null;
 }
