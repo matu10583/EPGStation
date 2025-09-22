@@ -137,12 +137,14 @@ export default abstract class BaseVide extends Vue {
     protected setIntervalPlayPosition(): void {
         this.updatePlayPositionId = window.setInterval(() => {
             if (this.video && !this.video.paused) {
-                this.savePlaybackPosition(this.video.currentTime);
+                this.savePlaybackPosition(this.getCurrentTime());
             }
         }, this.updatePlayPositionInterval * 1000);
     }
 
     protected async savePlaybackPosition(position: number): Promise<void> {
+        console.log(`save play position: ${position}`);
+
         await this.recordedAPIModel.updateLastPlayPosition((this.$props as any).recordedId, Math.floor(position));
     }
 

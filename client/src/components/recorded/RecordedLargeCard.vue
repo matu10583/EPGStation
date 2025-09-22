@@ -16,8 +16,7 @@
             </div>
             <div class="text caption font-weight-light">{{ item.display.channelName }}</div>
             <div class="text caption font-weight-light">{{ item.display.time }} ({{ item.display.duration }} m)</div>
-            <div v-if="item.display.lastPlayPosition !== null && item.display.lastPlayPosition >= 0" 
-                class="text caption font-weight-light play-position">
+            <div v-if="item.display.lastPlayPosition !== null && item.display.lastPlayPosition >= 0" class="text caption font-weight-light play-position">
                 視聴済み: {{ formatTime(item.display.lastPlayPosition) }}
             </div>
             <div
@@ -79,9 +78,7 @@ export default class RecordedLargeCard extends Vue {
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         const s = Math.floor(sec % 60);
-        return (h==0?[m, s]:[h,m,s])
-            .map(v => v < 10 ? '0' + v : v)
-            .join(':');
+        return (h == 0 ? [m, s] : [h, m, s]).map(v => (v < 10 ? '0' + v : v)).join(':');
     }
 }
 </script>
