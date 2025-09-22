@@ -32,6 +32,7 @@ export default class NormalVideo extends BaseVideo {
     }
 
     public async beforeDestroy(): Promise<void> {
+        this.savePlaybackPosition(this.getCurrentTime());
         this.commentSender.resetSrc();
         this.removeIntervalPlayPosition();
         super.beforeDestroy();

@@ -95,12 +95,12 @@ export default class RecordedStreamingVideo extends BaseVideo {
     }
 
     public async beforeDestroy(): Promise<void> {
+        this.savePlaybackPosition(this.getCurrentTime());
         this.commentSender.resetSrc();
         // socket.io イベント
         this.socketIoModel.offUpdateState(this.onUpdateStatusCallback);
 
         this.removeIntervalPlayPosition();
-        this.savePlaybackPosition(this.getCurrentTime());
         super.beforeDestroy();
     }
 

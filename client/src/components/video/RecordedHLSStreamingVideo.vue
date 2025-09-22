@@ -133,6 +133,7 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
 
     public async beforeDestroy(): Promise<void> {
         // socket.io イベント
+        this.savePlaybackPosition(this.getCurrentTime());
         this.socketIoModel.offUpdateState(this.onUpdateStatusCallback);
 
         super.beforeDestroy();
@@ -146,7 +147,6 @@ export default class RecordedHLSStreamingVideo extends BaseVideo {
             });
         });
         this.removeIntervalPlayPosition();
-        this.savePlaybackPosition(this.getCurrentTime());
     }
 
     /**
